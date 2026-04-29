@@ -11,6 +11,19 @@ class BookController extends Controller
     /**
      * Display a listing of the resource.
      */
+
+    public function bestsellers()
+{
+    $books = Book::orderBy('rating', 'desc') 
+                ->take(5)
+                ->get();
+
+    return response()->json([
+        'success' => true,
+        'data'    => $books,
+    ]);
+    }
+
     public function index()
     {
         $books = Book::with(['genres', 'characters'])->paginate(10);

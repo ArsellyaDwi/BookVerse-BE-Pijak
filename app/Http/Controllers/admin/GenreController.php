@@ -5,6 +5,8 @@ namespace App\Http\Controllers\admin;
 use App\Http\Controllers\Controller;
 use App\Models\Genre;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
 
 class GenreController extends Controller
 {
@@ -32,7 +34,25 @@ class GenreController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:genres,name',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // 2MB max
         ]);
+
+        // Generate slug from name
+        $validated['slug'] = Str::slug($validated['name']);
+        
+        // Check if slug is unique
+        $originalSlug = $validated['slug'];
+        $count = 1;
+        while (Genre::where('slug', $validated['slug'])->exists()) {
+            $validated['slug'] = $originalSlug . '-' . $count;
+            $count++;
+        }
+
+        // Handle image upload
+        if ($request->hasFile('image')) {
+            $imagePath = $request->file('image')->store('genre-images', 'public');
+            $validated['image'] = $imagePath;
+        }
 
         Genre::create($validated);
 
@@ -64,7 +84,32 @@ class GenreController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:genres,name,' . $genre->id,
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
+
+        // Update slug if name changed
+        if ($validated['name'] !== $genre->name) {
+            $validated['slug'] = Str::slug($validated['name']);
+            
+            // Check if new slug is unique
+            $originalSlug = $validated['slug'];
+            $count = 1;
+            while (Genre::where('slug', $validated['slug'])->where('id', '!=', $genre->id)->exists()) {
+                $validated['slug'] = $originalSlug . '-' . $count;
+                $count++;
+            }
+        }
+
+        // Handle image upload
+        if ($request->hasFile('image')) {
+            // Delete old image if exists
+            if ($genre->image && Storage::disk('public')->exists($genre->image)) {
+                Storage::disk('public')->delete($genre->image);
+            }
+            
+            $imagePath = $request->file('image')->store('genre-images', 'public');
+            $validated['image'] = $imagePath;
+        }
 
         $genre->update($validated);
 
@@ -81,6 +126,11 @@ class GenreController extends Controller
         if ($genre->books()->count() > 0) {
             return redirect()->route('admin.genres.index')
                 ->with('error', 'Cannot delete genre because it is associated with books.');
+        }
+
+        // Delete image if exists
+        if ($genre->image && Storage::disk('public')->exists($genre->image)) {
+            Storage::disk('public')->delete($genre->image);
         }
 
         $genre->delete();

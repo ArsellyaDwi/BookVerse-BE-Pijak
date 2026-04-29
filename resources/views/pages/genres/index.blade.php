@@ -68,7 +68,9 @@
                     <thead>
                         <tr class="border-gray-200 border-y dark:border-gray-700">
                             <th scope="col" class="px-4 py-3 font-normal text-gray-500 text-start text-theme-sm dark:text-gray-400">ID</th>
+                            <th scope="col" class="px-4 py-3 font-normal text-gray-500 text-start text-theme-sm dark:text-gray-400">Image</th>
                             <th scope="col" class="px-4 py-3 font-normal text-gray-500 text-start text-theme-sm dark:text-gray-400">Genre Name</th>
+                            <th scope="col" class="px-4 py-3 font-normal text-gray-500 text-start text-theme-sm dark:text-gray-400">Slug</th>
                             <th scope="col" class="px-4 py-3 font-normal text-gray-500 text-start text-theme-sm dark:text-gray-400">Books Count</th>
                             <th scope="col" class="px-4 py-3 font-normal text-gray-500 text-start text-theme-sm dark:text-gray-400">Created At</th>
                             <th scope="col" class="px-4 py-3 font-normal text-gray-500 text-center text-theme-sm dark:text-gray-400">Actions</th>
@@ -80,23 +82,42 @@
                             <td class="px-4 py-4 whitespace-nowrap">
                                 <div class="text-sm text-gray-500 dark:text-gray-400">#{{ $genre->id }}</div>
                             </td>
+                            
                             <td class="px-4 py-4 whitespace-nowrap">
-                                <div class="flex items-center gap-2">
-                                    <div class="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                                        <svg class="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l5 5a2 2 0 01.586 1.414V19a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2z"></path>
+                                @if($genre->image)
+                                    <div class="relative group">
+                                        <img src="{{ Storage::url($genre->image) }}" 
+                                             alt="{{ $genre->name }}" 
+                                             class="w-12 h-12 rounded-lg object-cover border border-gray-200 dark:border-gray-700 cursor-pointer hover:opacity-75 transition-opacity"
+                                             onclick="openImageModal('{{ Storage::url($genre->image) }}', '{{ $genre->name }}')">
+                                    </div>
+                                @else
+                                    <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30 flex items-center justify-center border border-gray-200 dark:border-gray-700">
+                                        <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                                         </svg>
                                     </div>
-                                    <div>
-                                        <div class="text-sm font-medium text-gray-900 dark:text-white">{{ $genre->name }}</div>
-                                    </div>
+                                @endif
+                            </td>
+                            
+                            <td class="px-4 py-4 whitespace-nowrap">
+                                <div>
+                                    <div class="text-sm font-medium text-gray-900 dark:text-white">{{ $genre->name }}</div>
                                 </div>
                             </td>
+                            
+                            <td class="px-4 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-500 dark:text-gray-400 font-mono">
+                                    {{ $genre->slug }}
+                                </div>
+                            </td>
+                            
                             <td class="px-4 py-4 whitespace-nowrap">
                                 <span class="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">
                                     {{ $genre->books()->count() }} books
                                 </span>
                             </td>
+                            
                             <td class="px-4 py-4 whitespace-nowrap">
                                 <div class="text-sm text-gray-500 dark:text-gray-400">
                                     {{ $genre->created_at->format('M d, Y') }}
@@ -105,6 +126,7 @@
                                     {{ $genre->created_at->format('h:i A') }}
                                 </div>
                             </td>
+                            
                             <td class="px-4 py-4 whitespace-nowrap">
                                 <div class="flex items-center justify-center gap-2">
                                     <!-- View Button -->
@@ -145,10 +167,10 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="5" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                            <td colspan="7" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
                                 <div class="flex flex-col items-center justify-center">
                                     <svg class="w-12 h-12 mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l5 5a2 2 0 01.586 1.414V19a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                                     </svg>
                                     <p class="text-lg font-medium">No genres found</p>
                                     <p class="text-sm">Click "Add New Genre" to create your first genre</p>
@@ -227,4 +249,49 @@
         @endif
     </div>
 </div>
+
+<!-- Image Modal -->
+<div id="imageModal" class="fixed inset-0 bg-black bg-opacity-75 hidden items-center justify-center z-50" onclick="closeImageModal()">
+    <div class="relative max-w-4xl max-h-[90vh] p-4" onclick="event.stopPropagation()">
+        <button onclick="closeImageModal()" class="absolute -top-10 right-0 text-white hover:text-gray-300 text-2xl font-bold">
+            &times;
+        </button>
+        <img id="modalImage" src="" alt="" class="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl">
+        <p id="modalCaption" class="text-center text-white mt-4 text-lg font-medium"></p>
+    </div>
+</div>
+
+@push('scripts')
+<script>
+    function openImageModal(imageUrl, genreName) {
+        const modal = document.getElementById('imageModal');
+        const modalImage = document.getElementById('modalImage');
+        const modalCaption = document.getElementById('modalCaption');
+        
+        modalImage.src = imageUrl;
+        modalCaption.textContent = genreName;
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        
+        // Prevent body scroll when modal is open
+        document.body.style.overflow = 'hidden';
+    }
+    
+    function closeImageModal() {
+        const modal = document.getElementById('imageModal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        
+        // Restore body scroll
+        document.body.style.overflow = '';
+    }
+    
+    // Close modal with Escape key
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            closeImageModal();
+        }
+    });
+</script>
+@endpush
 @endsection

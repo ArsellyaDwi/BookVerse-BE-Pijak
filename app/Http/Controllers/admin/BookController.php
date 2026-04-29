@@ -9,6 +9,7 @@ use App\Models\Genre;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class BookController extends Controller
 {
@@ -299,7 +300,7 @@ class BookController extends Controller
                 foreach ($genreNames as $genreName) {
                     if (!empty(trim($genreName))) {
                         try {
-                            $genre = Genre::firstOrCreate(['name' => trim($genreName)]);
+                            $genre = Genre::firstOrCreate(['name' => trim($genreName), 'slug' => Str::slug(trim($genreName))]);
                             $genreIds[] = $genre->id;
                         } catch (\Exception $e) {
                             // Skip invalid genre

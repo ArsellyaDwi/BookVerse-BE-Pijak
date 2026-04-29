@@ -20,7 +20,6 @@ class AuthController extends Controller
         $credentials = [
             'email' => $validated['email'],
             'password' => $validated['password'],
-            'role' => 'customer',
         ];
 
         $token = auth('api')->attempt($credentials);

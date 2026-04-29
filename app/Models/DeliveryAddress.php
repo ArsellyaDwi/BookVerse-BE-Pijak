@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class DeliveryAddress extends Model
 {
-    protected $table = 'delivery_adresses';
+    protected $table = 'delivery_addresses';
 
     protected $fillable = [
         'user_id',
@@ -17,6 +17,7 @@ class DeliveryAddress extends Model
         'address',
         'lat',
         'long',
+        'is_default'
     ];
 
     protected $casts = [
