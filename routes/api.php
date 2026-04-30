@@ -7,10 +7,16 @@ use App\Http\Controllers\user\BookController;
 use App\Http\Controllers\user\CartController;
 use App\Http\Controllers\user\DeliveryAddressController;
 use App\Http\Controllers\user\DeliveryMethodController;
+use App\Http\Controllers\user\ForgotPasswordController;
 use App\Http\Controllers\user\GenreController;
 use App\Http\Controllers\user\PaymentMethodController;
+use App\Http\Controllers\user\ResetPasswordController;
 use App\Http\Controllers\user\WishlistController;
+
 use App\Models\PaymentMethod;
+
+Route::post('auth/forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail']);
+Route::post('auth/reset-password', [ResetPasswordController::class, 'reset']);
 
 Route::group([
     'middleware' => ['api', 'auth:api'],
@@ -25,10 +31,10 @@ Route::group([
         Route::post('me', [AuthController::class, 'logout']);
     });
 
-    
+
     Route::get('payment-methods', [PaymentMethodController::class, 'index']);
     Route::get('delivery-methods', [DeliveryMethodController::class, 'index']);
-    
+
     Route::get('delivery-addresses', [DeliveryAddressController::class, 'index']);
     Route::post('delivery-addresses', [DeliveryAddressController::class, 'store']);
     Route::get('delivery-addresses/{id}', [DeliveryAddressController::class, 'show']);

@@ -14,15 +14,19 @@ use App\Http\Controllers\admin\GenreController;
 use App\Http\Controllers\admin\PaymentMethodController;
 use App\Http\Controllers\admin\StoreSettingController;
 use App\Http\Controllers\admin\TransactionController;
+use App\Http\Controllers\API\ForgotPasswordController as APIForgotPasswordController;
+use App\Http\Controllers\user\ForgotPasswordController;
+use App\Http\Controllers\user\ResetPasswordController;
 use Illuminate\Support\Facades\Route;
 
-
+// Guest routes (no authentication required)
 Route::get('auth/login', [AuthController::class, 'index'])->name('auth.login');
 Route::post('auth/login', [AuthController::class, 'login'])->name('auth.login.store');
 Route::post('auth/logout', [AuthController::class, 'logout'])->name('auth.logout');
 
-
+// Admin routes (protected)
 Route::middleware('admin')->name('admin.')->group(function () {
+
     Route::get('/', [DashboardController::class, 'index']);
     Route::resource('books', BookController::class);
     Route::resource('genres', GenreController::class);
