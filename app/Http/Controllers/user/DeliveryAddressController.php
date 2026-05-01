@@ -7,123 +7,151 @@ use App\Models\DeliveryAddress;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+
 class DeliveryAddressController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        $data = DeliveryAddress::all();
+        $addresses = DeliveryAddress::where('user_id', Auth::id())
+            ->orderBy('is_default', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
         return response()->json([
-            "data" => $data
+            'success' => true,
+            'data' => $addresses
         ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        $data = $request->validate([
-            'province' => 'required',
-            'city' => 'required',
-            'district' => 'required',
-            'village' => 'required',
-            'address' => 'nullable',
-            'lat' => 'required',
-            'long' => 'required',
-            'is_default' => 'required',
+        $request->validate([
+            'province' => 'required|string|max:255',
+            'city' => 'required|string|max:255',
+            'district' => 'required|string|max:255',
+            'village' => 'required|string|max:255',
+            'address' => 'required|string',
+            'lat' => 'nullable|numeric',
+            'long' => 'nullable|numeric',
+            'is_default' => 'boolean'
         ]);
 
-        $created = DeliveryAddress::create([
-            'user_id' => Auth::guard('api')->user()->id,
-            'province' => $data['province'],
-            'city' => $data['city'],
-            'district' => $data['district'],
-            'village' => $data['village'],
-            'address' => $data['address'],
-            'lat' => $data['lat'],
-            'long' => $data['long'],
-            'is_default' => $data['is_default'],
+        $user = Auth::user();
+
+        // If this address is set as default, remove default from other addresses
+        if ($request->is_default) {
+            DeliveryAddress::where('user_id', $user->id)->update(['is_default' => false]);
+        }
+
+        $address = DeliveryAddress::create([
+            'user_id' => $user->id,
+            'province' => $request->province,
+            'city' => $request->city,
+            'district' => $request->district,
+            'village' => $request->village,
+            'address' => $request->address,
+            'lat' => $request->lat,
+            'long' => $request->long,
+            'is_default' => $request->is_default ?? false
         ]);
+
+        // If this is the first address, make it default
+        if (DeliveryAddress::where('user_id', $user->id)->count() === 1) {
+            $address->update(['is_default' => true]);
+        }
 
         return response()->json([
-            'data' => $created,
+            'success' => true,
+            'message' => 'Address added successfully',
+            'data' => $address
         ]);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    public function update(Request $request, $id)
     {
-        $data = DeliveryAddress::findOrFail($id);
-         return response()->json([
-            'data' => $data,
-        ]);
-    }
+        $address = DeliveryAddress::where('user_id', Auth::id())->where('id', $id)->first();
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
+        if (!$address) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Address not found'
+            ], 404);
+        }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        $data = $request->validate([
-            'province' => 'required',
-            'city' => 'required',
-            'district' => 'required',
-            'village' => 'required',
-            'address' => 'nullable',
-            'lat' => 'required',
-            'long' => 'required',
-            'is_default' => 'required',
+        $request->validate([
+            'province' => 'required|string|max:255',
+            'city' => 'required|string|max:255',
+            'district' => 'required|string|max:255',
+            'village' => 'required|string|max:255',
+            'address' => 'required|string',
+            'lat' => 'nullable|numeric',
+            'long' => 'nullable|numeric',
+            'is_default' => 'boolean'
         ]);
 
-        $da = DeliveryAddress::findOrFail($id);
+        // If this address is set as default, remove default from other addresses
+        if ($request->is_default && !$address->is_default) {
+            DeliveryAddress::where('user_id', Auth::id())->update(['is_default' => false]);
+        }
 
-        $updated = tap($da)->update([
-            'user_id' => Auth::guard('api')->user()->id,
-            'province' => $data['province'],
-            'city' => $data['city'],
-            'district' => $data['district'],
-            'village' => $data['village'],
-            'address' => $data['address'],
-            'lat' => $data['lat'],
-            'long' => $data['long'],
-            'is_default' => $data['is_default'],
-        ]);
+        $address->update($request->all());
 
         return response()->json([
-            'data' => $updated,
+            'success' => true,
+            'message' => 'Address updated successfully',
+            'data' => $address
         ]);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
+    public function destroy($id)
     {
-        DeliveryAddress::destroy($id);
+        $address = DeliveryAddress::where('user_id', Auth::id())->where('id', $id)->first();
+
+        if (!$address) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Address not found'
+            ], 404);
+        }
+
+        $wasDefault = $address->is_default;
+        $address->delete();
+
+        // If deleted address was default, set another address as default
+        if ($wasDefault) {
+            $newDefault = DeliveryAddress::where('user_id', Auth::id())->first();
+            if ($newDefault) {
+                $newDefault->update(['is_default' => true]);
+            }
+        }
 
         return response()->json([
-            'message' => 'Deleted succesfully',
+            'success' => true,
+            'message' => 'Address deleted successfully'
+        ]);
+    }
+
+    public function setDefault($id)
+    {
+        $address = DeliveryAddress::where('user_id', Auth::id())->where('id', $id)->first();
+
+        if (!$address) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Address not found'
+            ], 404);
+        }
+
+        // Remove default from all addresses
+        DeliveryAddress::where('user_id', Auth::id())->update(['is_default' => false]);
+
+        // Set this address as default
+        $address->update(['is_default' => true]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Default address set successfully',
+            'data' => $address
         ]);
     }
 }

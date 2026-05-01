@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\user\AuthController;
 use App\Http\Controllers\user\BookController;
 use App\Http\Controllers\user\CartController;
+use App\Http\Controllers\user\CheckoutController;
 use App\Http\Controllers\user\DeliveryAddressController;
 use App\Http\Controllers\user\DeliveryMethodController;
 use App\Http\Controllers\user\ForgotPasswordController;
@@ -37,9 +38,9 @@ Route::group([
 
     Route::get('delivery-addresses', [DeliveryAddressController::class, 'index']);
     Route::post('delivery-addresses', [DeliveryAddressController::class, 'store']);
-    Route::get('delivery-addresses/{id}', [DeliveryAddressController::class, 'show']);
     Route::put('delivery-addresses/{id}', [DeliveryAddressController::class, 'update']);
     Route::delete('delivery-addresses/{id}', [DeliveryAddressController::class, 'destroy']);
+    Route::patch('delivery-addresses/{id}/default', [DeliveryAddressController::class, 'setDefault']);
 
     Route::get('wishlist', [WishlistController::class, 'index']);
     Route::post('wishlist', [WishlistController::class, 'store']);
@@ -48,9 +49,17 @@ Route::group([
     Route::post('cart', [CartController::class, 'store']);
     Route::post('/cart/minus', [CartController::class, 'minus']);
     Route::delete('/cart/{id}', [CartController::class, 'destroy']);
+
+    Route::get('/checkout/data', [CheckoutController::class, 'getCheckoutData']);
+    Route::post('/checkout', [CheckoutController::class, 'createTransaction']);
+    Route::post('/transactions/{id}/upload-payment', [CheckoutController::class, 'uploadPaymentProof']);
+    Route::get('/transactions', [CheckoutController::class, 'getUserTransactions']);
+    Route::get('/transactions/{id}', [CheckoutController::class, 'getTransactionDetail']);
 });
 
 Route::get('genre', [GenreController::class, 'index']);
+
 Route::get('books', [BookController::class, 'index']);
+Route::get('/books/init', [BookController::class, 'init']);
 Route::get('books/{id}', [BookController::class, 'show']);
 Route::get('books/bestsellers', [BookController::class, 'bestsellers']);

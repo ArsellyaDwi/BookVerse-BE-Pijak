@@ -19,7 +19,7 @@ return new class extends Migration
             $table->decimal('total', 10, 2);
             $table->enum('status', ['waiting_payment', 'shipped', 'done', 'cancelled']);
             $table->string('payment_proof')->nullable();
-            $table->foreignId('delivery_address_id')->constrained('delivery_addresses');
+            $table->bigInteger('delivery_address_id')->nullable();
         });
     }
 
