@@ -1,5 +1,4 @@
 <?php
-
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\user\AuthController;
@@ -13,11 +12,13 @@ use App\Http\Controllers\user\GenreController;
 use App\Http\Controllers\user\PaymentMethodController;
 use App\Http\Controllers\user\ResetPasswordController;
 use App\Http\Controllers\user\WishlistController;
+use App\Http\Controllers\user\ContactController;
 
 use App\Models\PaymentMethod;
 
 Route::post('auth/forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail']);
 Route::post('auth/reset-password', [ResetPasswordController::class, 'reset']);
+Route::post('contact', [ContactController::class, 'store']);
 
 Route::group([
     'middleware' => ['api', 'auth:api'],
@@ -55,6 +56,9 @@ Route::group([
     Route::post('/transactions/{id}/upload-payment', [CheckoutController::class, 'uploadPaymentProof']);
     Route::get('/transactions', [CheckoutController::class, 'getUserTransactions']);
     Route::get('/transactions/{id}', [CheckoutController::class, 'getTransactionDetail']);
+    Route::get('contact/messages', [ContactController::class, 'index']);
+    Route::patch('contact/messages/{id}/read', [ContactController::class, 'markAsRead']);
+    Route::delete('contact/messages/{id}', [ContactControllerller::class, 'destroy']);
 });
 
 Route::get('genre', [GenreController::class, 'index']);
