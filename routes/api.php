@@ -30,6 +30,7 @@ Route::group([
 
         Route::post('logout', [AuthController::class, 'logout']);
         Route::post('me', [AuthController::class, 'logout']);
+        Route::put('/', [AuthController::class, 'updateAccount']);
     });
 
 

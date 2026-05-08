@@ -74,4 +74,15 @@ class AuthController extends Controller
         auth('api')->logout();
         return response()->json(['message' => 'Successfully logged out']);
     }
+
+    public function updateAccount(Request $request)
+    {
+        $user = auth('api')->user();
+        $user->update($request->only(['name', 'email']));
+
+        return response()->json([
+            'message' => 'Account updated successfully',
+            'user' => $user,
+        ]);
+    }
 }
