@@ -13,7 +13,7 @@ use App\Http\Controllers\user\GenreController;
 use App\Http\Controllers\user\PaymentMethodController;
 use App\Http\Controllers\user\ResetPasswordController;
 use App\Http\Controllers\user\WishlistController;
-
+use App\Http\Controllers\API\ContactController;
 use App\Models\PaymentMethod;
 
 Route::post('auth/forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail']);
@@ -30,7 +30,12 @@ Route::group([
 
         Route::post('logout', [AuthController::class, 'logout']);
         Route::post('me', [AuthController::class, 'logout']);
+
         Route::put('/', [AuthController::class, 'updateAccount']);
+        Route::get('/auth/me', [AuthController::class, 'me']);
+        Route::put('profile', [AuthController::class, 'updateProfile']);
+        Route::put('change-password', [AuthController::class, 'changePassword']);
+
     });
 
 
@@ -58,6 +63,7 @@ Route::group([
     Route::get('/transactions/{id}', [CheckoutController::class, 'getTransactionDetail']);
 });
 
+Route::post('/contact/send', [ContactController::class, 'send']);
 Route::get('genre', [GenreController::class, 'index']);
 
 Route::get('books', [BookController::class, 'index']);
