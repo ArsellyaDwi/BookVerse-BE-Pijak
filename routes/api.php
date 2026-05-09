@@ -9,7 +9,7 @@ use App\Http\Controllers\user\CheckoutController;
 use App\Http\Controllers\user\DeliveryAddressController;
 use App\Http\Controllers\user\DeliveryMethodController;
 use App\Http\Controllers\user\ForgotPasswordController;
-use App\Http\Controllers\user\GenreController;
+use App\Http\Controllers\Api\GenreController;
 use App\Http\Controllers\user\PaymentMethodController;
 use App\Http\Controllers\user\ResetPasswordController;
 use App\Http\Controllers\user\WishlistController;
@@ -64,7 +64,9 @@ Route::group([
 });
 
 Route::post('/contact/send', [ContactController::class, 'send']);
-Route::get('genre', [GenreController::class, 'index']);
+Route::get('/genre', [GenreController::class, 'index']);
+Route::get('/genre/{slug}', [GenreController::class, 'show']);
+Route::get('/genres/{slug}/books', [GenreController::class, 'getBooksByGenre']);
 
 Route::get('books', [BookController::class, 'index']);
 Route::get('/books/init', [BookController::class, 'init']);
