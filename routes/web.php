@@ -18,6 +18,9 @@ use App\Http\Controllers\API\ForgotPasswordController as APIForgotPasswordContro
 use App\Http\Controllers\user\ForgotPasswordController;
 use App\Http\Controllers\user\ResetPasswordController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\admin\ContactMessageController;
+use App\Http\Controllers\API\ContactController as APIContactController;
+use App\Http\Controllers\ContactController;
 
 // Guest routes (no authentication required)
 Route::get('auth/login', [AuthController::class, 'index'])->name('auth.login');
@@ -52,7 +55,13 @@ Route::middleware('admin')->name('admin.')->group(function () {
 
     Route::get('account-settings', [AccountSettingController::class, 'index'])->name('account-settings.index');
     Route::put('account-settings', [AccountSettingController::class, 'update'])->name('account-settings.update');
-
+    Route::get('contact-messages', [ContactMessageController::class, 'index'])->name('contact-messages.index');
+    Route::get('contact-messages/{id}', [ContactMessageController::class, 'show'])->name('contact-messages.show');
+    Route::post('contact-messages/{id}/reply', [ContactMessageController::class, 'reply'])->name('contact-messages.reply');
+    Route::delete('contact-messages/{id}', [ContactMessageController::class, 'destroy'])->name('contact-messages.destroy');
+    Route::post('contact-messages/bulk-delete', [ContactMessageController::class, 'bulkDelete'])->name('contact-messages.bulk-delete');
+    Route::post('contact-messages/{id}/resend-email', [ContactMessageController::class, 'resendEmail'])
+    ->name('admin.contact-messages.resend-email');
     Route::prefix('ai')->name('ai.')->group(function () {
         Route::resource('emotion-datasets', AiEmotionDatasetController::class);
 
