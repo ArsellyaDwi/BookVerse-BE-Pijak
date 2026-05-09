@@ -41,8 +41,8 @@ class MenuHelper
                 'name' => 'Sales',
                 'subItems' => [
                     ['name' => 'Transaction', 'path' => '/transactions'],
-                    ['name' => 'Payment Method', 'path' => '/payment-methods'],
-                    ['name' => 'Delivery Method', 'path' => '/delivery-methods'],
+                    ['name' => 'Payment Methods', 'path' => '/payment-methods'],
+                    ['name' => 'Delivery Methods', 'path' => '/delivery-methods'],
                 ],
             ],
             [
