@@ -21,11 +21,20 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\admin\ContactMessageController;
 use App\Http\Controllers\API\ContactController as APIContactController;
 use App\Http\Controllers\ContactController;
+use App\Http\Controllers\User\PageController;
+use App\Http\Controllers\Api\SubscribeController;
 
 // Guest routes (no authentication required)
 Route::get('auth/login', [AuthController::class, 'index'])->name('auth.login');
 Route::post('auth/login', [AuthController::class, 'login'])->name('auth.login.store');
 Route::post('auth/logout', [AuthController::class, 'logout'])->name('auth.logout');
+
+Route::get('/terms', [PageController::class, 'terms'])->name('pages.terms');
+Route::get('/privacy', [PageController::class, 'privacy'])->name('pages.privacy');
+Route::get('/faq', [PageController::class, 'faq'])->name('pages.faq');
+Route::get('/return-policy', [PageController::class, 'returnPolicy'])->name('pages.return');
+
+Route::post('/api/subscribe', [SubscribeController::class, 'subscribe']);
 
 // Admin routes (protected)
 Route::middleware('admin')->name('admin.')->group(function () {
