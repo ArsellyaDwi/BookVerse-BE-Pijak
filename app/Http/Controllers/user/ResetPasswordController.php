@@ -13,9 +13,6 @@ class ResetPasswordController extends Controller
 {
     public function reset(Request $request)
     {
-        // Debug - log request
-        \Log::info('Reset Request Data:', $request->all());
-        
         $validator = Validator::make($request->all(), [
             'email' => 'required|email|exists:users,email',
             'token' => 'required|string',
@@ -23,9 +20,6 @@ class ResetPasswordController extends Controller
         ]);
 
         if ($validator->fails()) {
-            // Debug - log errors
-            \Log::error('Validation Errors:', $validator->errors()->toArray());
-            
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed',
@@ -33,13 +27,9 @@ class ResetPasswordController extends Controller
             ], 422);
         }
 
-        // Cek token di database
         $resetRecord = DB::table('password_reset_tokens')
             ->where('email', $request->email)
             ->first();
-
-        // Debug - log token record
-        \Log::info('Reset Record:', (array)$resetRecord);
 
         if (!$resetRecord) {
             return response()->json([
@@ -51,7 +41,6 @@ class ResetPasswordController extends Controller
             ], 400);
         }
 
-        // Verifikasi token
         if (!Hash::check($request->token, $resetRecord->token)) {
             return response()->json([
                 'success' => false,
@@ -62,28 +51,25 @@ class ResetPasswordController extends Controller
             ], 400);
         }
 
-        // Cek expired
         if (now()->diffInMinutes($resetRecord->created_at) > 60) {
             return response()->json([
                 'success' => false,
                 'message' => 'Token expired',
                 'errors' => [
-                    'token' => ['Reset link has expired. Please request a new one.']
+                    'token' => ['Reset link has expired (60 minutes). Please request a new one.']
                 ]
             ], 400);
         }
 
-        // Update password
-        $user = User::whereEmail($request->email)->first();
+        $user = User::where('email', $request->email)->first();
         $user->password = Hash::make($request->password);
         $user->save();
 
-        // Hapus token
         DB::table('password_reset_tokens')->where('email', $request->email)->delete();
 
         return response()->json([
             'success' => true,
-            'message' => 'Password reset successful'
+            'message' => 'Password reset successful. Please login with your new password.'
         ]);
     }
 }
