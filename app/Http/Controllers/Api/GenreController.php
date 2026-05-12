@@ -4,135 +4,133 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Genre;
-use App\Models\Book;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class GenreController extends Controller
 {
-    /**
-     * Get all genres (for frontend)
-     * GET /api/genre
-     */
     public function index()
     {
-        $genres = Genre::select('id', 'name', 'slug', 'image')
-            ->orderBy('name')
-            ->get();
-
-        // Add book count for each genre
-        foreach ($genres as $genre) {
-            $genre->book_count = $genre->books()->count();
-        }
-
+        $genres = Genre::withCount('books')->get();
+        
+        // Track used book IDs to avoid duplication
+        $usedBookIds = [];
+        
+        $genres->each(function ($genre) use (&$usedBookIds) {
+            $bestSeller = $genre->books()
+                ->orderBy('rating', 'desc')
+                ->whereNotIn('books.id', $usedBookIds)
+                ->first();
+            
+            if ($bestSeller && $bestSeller->cover_img) {
+                $genre->image = asset('storage/' . $bestSeller->cover_img);
+                $usedBookIds[] = $bestSeller->id;
+            } else {
+                $anyBook = $genre->books()->first();
+                $genre->image = $anyBook && $anyBook->cover_img 
+                    ? asset('storage/' . $anyBook->cover_img) 
+                    : $genre->image;
+            }
+        });
+        
         return response()->json([
             'success' => true,
             'data' => $genres
         ]);
     }
 
-    /**
-     * Get single genre detail
-     * GET /api/genre/{slug}
-     */
     public function show($slug)
     {
         $genre = Genre::where('slug', $slug)
-            ->select('id', 'name', 'slug', 'image')
+            ->withCount('books')
+            ->firstOrFail();
+
+        $bestSeller = $genre->books()
+            ->orderBy('rating', 'desc')
             ->first();
-
-        if (!$genre) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Genre not found'
-            ], 404);
-        }
-
-        $genre->book_count = $genre->books()->count();
-
+        
+        $genre->image = $bestSeller && $bestSeller->cover_img 
+            ? asset('storage/' . $bestSeller->cover_img) 
+            : $genre->image;
+        
         return response()->json([
             'success' => true,
             'data' => $genre
         ]);
     }
 
-    /**
-     * Get books by genre slug
-     * GET /api/genres/{slug}/books
-     */
-    public function getBooksByGenre($slug, Request $request)
+    public function getBooksByGenre($slug)
     {
-        // Find genre by slug
-        $genre = Genre::where('slug', $slug)->first();
-
-        if (!$genre) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Genre not found'
-            ], 404);
-        }
-
-        // Query books related to this genre
-        $query = $genre->books();
-
-        // Apply search filter
-        if ($request->has('search') && !empty($request->search)) {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('author', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
-            });
-        }
-
-        // Apply sorting
-        switch ($request->get('sort', 'latest')) {
-            case 'latest':
-                $query->orderBy('created_at', 'desc');
-                break;
-            case 'popular':
-                $query->orderBy('views', 'desc');
-                break;
-            case 'price_asc':
-                $query->orderBy('price', 'asc');
-                break;
-            case 'price_desc':
-                $query->orderBy('price', 'desc');
-                break;
-            case 'title_asc':
-                $query->orderBy('title', 'asc');
-                break;
-            case 'title_desc':
-                $query->orderBy('title', 'desc');
-                break;
-            default:
-                $query->orderBy('created_at', 'desc');
-        }
-
-        // Pagination
-        $limit = $request->get('limit', 12);
-        $books = $query->paginate($limit);
-
-        // Format response
-        $booksData = $books->items();
+        $genre = Genre::where('slug', $slug)->firstOrFail();
         
-        // Add rating if not exists
-        foreach ($booksData as $book) {
-            $book->rating = $book->rating ?? rand(35, 50) / 10;
-        }
-
+        $books = $genre->books()->paginate(12);
+        
         return response()->json([
             'success' => true,
-            'data' => $booksData,
+            'data' => $books->items(),
             'total' => $books->total(),
             'current_page' => $books->currentPage(),
             'last_page' => $books->lastPage(),
             'per_page' => $books->perPage(),
-            'genre' => [
+            'genre' => $genre
+        ]);
+    }
+    
+    public function getGenresWithUniqueImages()
+    {
+        $genres = Genre::withCount('books')->get();
+
+        $allBooks = collect();
+        foreach ($genres as $genre) {
+            $books = $genre->books()
+                ->select('books.id', 'books.title', 'books.rating', 'books.cover_img')
+                ->get()
+                ->map(function ($book) use ($genre) {
+                    return [
+                        'book_id' => $book->id,
+                        'genre_id' => $genre->id,
+                        'genre_slug' => $genre->slug,
+                        'rating' => $book->rating,
+                        'cover_img' => $book->cover_img,
+                    ];
+                });
+            $allBooks = $allBooks->concat($books);
+        }
+
+        $sortedBooks = $allBooks->sortByDesc('rating');
+
+        $usedBookIds = [];
+        $result = [];
+        
+        foreach ($genres as $genre) {
+            $bestBookForGenre = $sortedBooks
+                ->where('genre_id', $genre->id)
+                ->whereNotIn('book_id', $usedBookIds)
+                ->first();
+            
+            if ($bestBookForGenre && $bestBookForGenre['cover_img']) {
+                $image = asset('storage/' . $bestBookForGenre['cover_img']);
+                $usedBookIds[] = $bestBookForGenre['book_id'];
+            } else {
+
+                $anyBook = $genre->books()->first();
+                $image = $anyBook && $anyBook->cover_img 
+                    ? asset('storage/' . $anyBook->cover_img) 
+                    : null;
+            }
+            
+            $result[] = [
                 'id' => $genre->id,
                 'name' => $genre->name,
                 'slug' => $genre->slug,
-                'image' => $genre->image,
-            ]
+                'book_count' => $genre->books_count,
+                'image' => $image,
+            ];
+        }
+        
+        return response()->json([
+            'success' => true,
+            'data' => $result
         ]);
     }
 }
