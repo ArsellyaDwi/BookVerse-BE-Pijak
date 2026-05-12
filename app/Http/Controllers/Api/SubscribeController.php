@@ -19,6 +19,7 @@ class SubscribeController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
+                'message' => 'This email is already subscribed to our newsletter!', // ← SUDAH ADA
                 'errors' => $validator->errors()
             ], 422);
         }
@@ -28,7 +29,7 @@ class SubscribeController extends Controller
             'is_active' => true,
         ]);
 
-        // Kirim email welcome (opsional)
+        // Kirim email welcome
         try {
             Mail::send('emails.welcome-subscriber', ['email' => $request->email], function ($message) use ($request) {
                 $message->to($request->email)
@@ -41,6 +42,6 @@ class SubscribeController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Successfully subscribed to newsletter!'
-        ]);
+        ], 200);
     }
 }
