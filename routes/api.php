@@ -15,9 +15,13 @@ use App\Http\Controllers\user\ResetPasswordController;
 use App\Http\Controllers\user\WishlistController;
 use App\Http\Controllers\API\ContactController;
 use App\Models\PaymentMethod;
+use App\Http\Controllers\Api\SubscribeController;
+use App\Http\Controllers\user\EmotionController;
 
 Route::post('auth/forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail']);
 Route::post('auth/reset-password', [ResetPasswordController::class, 'reset']);
+
+Route::post('/subscribe', [SubscribeController::class, 'subscribe']);
 
 Route::group([
     'middleware' => ['api', 'auth:api'],
@@ -72,3 +76,8 @@ Route::get('books', [BookController::class, 'index']);
 Route::get('/books/init', [BookController::class, 'init']);
 Route::get('books/{id}', [BookController::class, 'show']);
 Route::get('books/bestsellers', [BookController::class, 'bestsellers']);
+
+Route::post('/emotion/detect', [EmotionController::class, 'detect']);
+Route::post('/emotion/recommend', [EmotionController::class, 'recommend']);
+Route::post('/emotion/analyze', [EmotionController::class, 'analyzeAndRecommend']);
+Route::get('/emotion/list', [EmotionController::class, 'getEmotions']);
