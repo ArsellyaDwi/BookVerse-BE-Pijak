@@ -34,8 +34,6 @@ Route::get('/privacy', [PageController::class, 'privacy'])->name('pages.privacy'
 Route::get('/faq', [PageController::class, 'faq'])->name('pages.faq');
 Route::get('/return-policy', [PageController::class, 'returnPolicy'])->name('pages.return');
 
-Route::post('/api/subscribe', [SubscribeController::class, 'subscribe']);
-
 // Admin routes (protected)
 Route::middleware('admin')->name('admin.')->group(function () {
 
