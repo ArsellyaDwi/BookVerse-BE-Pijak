@@ -14,9 +14,9 @@ use App\Http\Controllers\user\PaymentMethodController;
 use App\Http\Controllers\user\ResetPasswordController;
 use App\Http\Controllers\user\WishlistController;
 use App\Http\Controllers\API\ContactController;
-use App\Models\PaymentMethod;
 use App\Http\Controllers\Api\SubscribeController;
 use App\Http\Controllers\user\EmotionController;
+use App\Http\Controllers\QuoteController;
 
 Route::post('auth/forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail']);
 Route::post('auth/reset-password', [ResetPasswordController::class, 'reset']);
@@ -81,3 +81,10 @@ Route::post('/emotion/detect', [EmotionController::class, 'detect']);
 Route::post('/emotion/recommend', [EmotionController::class, 'recommend']);
 Route::post('/emotion/analyze', [EmotionController::class, 'analyzeAndRecommend']);
 Route::get('/emotion/list', [EmotionController::class, 'getEmotions']);
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/quotes/today', [QuoteController::class, 'getQuoteOfDay']);
+    Route::get('/quotes', [QuoteController::class, 'getAllQuotes']);
+    Route::post('/quotes/save/{id}', [QuoteController::class, 'saveQuote']);
+    Route::delete('/quotes/save/{id}', [QuoteController::class, 'unsaveQuote']);
+});
