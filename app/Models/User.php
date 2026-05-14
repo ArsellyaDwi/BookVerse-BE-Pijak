@@ -1,8 +1,6 @@
 <?php
 
 namespace App\Models;
-
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -71,5 +69,28 @@ class User extends Authenticatable implements JWTSubject
     public function recommendations()
     {
         return $this->hasMany(AiRecommendationLog::class);
+    }
+/**
+     * Get all quotes posted by this user
+     */
+    public function quotes()
+    {
+        return $this->hasMany(BookQuote::class, 'user_id');
+    }
+
+    /**
+     * Get quotes liked by this user
+     */
+    public function likedQuotes()
+    {
+        return $this->belongsToMany(BookQuote::class, 'quote_likes', 'user_id', 'quote_id');
+    }
+
+    /**
+     * Get quotes saved by this user
+     */
+    public function savedQuotes()
+    {
+        return $this->belongsToMany(BookQuote::class, 'user_saved_quotes', 'user_id', 'quote_id');
     }
 }
