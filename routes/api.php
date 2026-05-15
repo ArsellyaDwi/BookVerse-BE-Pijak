@@ -19,12 +19,9 @@ use App\Http\Controllers\user\EmotionController;
 use App\Http\Controllers\QuoteController;
 
 // PUBLIC ROUTES (No Auth Required)
-
 Route::post('auth/forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail']);
 Route::post('auth/reset-password', [ResetPasswordController::class, 'reset']);
-
 Route::post('/subscribe', [SubscribeController::class, 'subscribe']);
-
 Route::post('/contact/send', [ContactController::class, 'send']);
 
 // Genre Routes
@@ -49,9 +46,6 @@ Route::get('/quotes/today', [QuoteController::class, 'getQuoteOfDay']);
 Route::get('/quotes', [QuoteController::class, 'getAllQuotes']);
 Route::post('/quotes/by-mood', [QuoteController::class, 'getQuotesByMood']);
 Route::get('/quotes/mood/{mood}', [QuoteController::class, 'getQuotesByMoodTag']);
-Route::delete('/quotes/delete/{id}', [QuoteController::class, 'deleteQuote']);
-Route::post('/quotes/like/{id}', [QuoteController::class, 'likeQuote']);
-Route::get('/quotes/community', [QuoteController::class, 'getAllUserQuotes']);
 
 // AUTH ROUTES
 Route::group([
@@ -63,7 +57,7 @@ Route::group([
         Route::post('register', [AuthController::class, 'register'])->withoutMiddleware(['auth:api']);
 
         Route::post('logout', [AuthController::class, 'logout']);
-        Route::post('me', [AuthController::class, 'logout']);
+        Route::get('me', [AuthController::class, 'me']);
 
         Route::put('/', [AuthController::class, 'updateAccount']);
         Route::get('/auth/me', [AuthController::class, 'me']);
@@ -105,4 +99,7 @@ Route::group([
     Route::delete('/quotes/save/{id}', [QuoteController::class, 'unsaveQuote']);
     Route::get('/quotes/saved', [QuoteController::class, 'getSavedQuotes']);
     Route::post('/quotes/add', [QuoteController::class, 'addQuote']);
+    Route::delete('/quotes/delete/{id}', [QuoteController::class, 'deleteQuote']);
+    Route::post('/quotes/like/{id}', [QuoteController::class, 'likeQuote']);
+    Route::get('/quotes/community', [QuoteController::class, 'getAllUserQuotes']);
 });

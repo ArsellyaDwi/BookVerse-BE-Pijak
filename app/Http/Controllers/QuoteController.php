@@ -190,7 +190,6 @@ class QuoteController extends Controller
 
                 return $quote;
             });
-
         return response()->json([
             'success' => true,
             'data' => $quotes
@@ -291,9 +290,7 @@ class QuoteController extends Controller
             'mood' => $request->mood,
             'user_id' => $user->id,
             'is_approved' => true,
-            'author_name' => $request->is_anonymous
-                ? 'Anonymous'
-                : preg_replace('/\d+$/', '', $user->name),
+            'author_name' => $request->is_anonymous ? 'Anonymous' : $user->name,
             'likes_count' => 0,
             'is_anonymous' => $request->is_anonymous ?? false
         ]);
