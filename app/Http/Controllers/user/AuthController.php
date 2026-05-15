@@ -85,7 +85,7 @@ class AuthController extends Controller
     public function me()
     {
         $user = auth('api')->user();
-        
+
         if (!$user) {
             return response()->json([
                 'message' => 'User not found'
@@ -101,7 +101,7 @@ class AuthController extends Controller
     public function logout()
     {
         auth('api')->logout();
-        
+
         return response()->json([
             'success' => true,
             'message' => 'Successfully logged out'
@@ -141,8 +141,14 @@ class AuthController extends Controller
         }
 
         $user->update($request->only([
-            'name', 'phone', 'address', 'city', 
-            'province', 'postal_code', 'gender', 'birth_date'
+            'name',
+            'phone',
+            'address',
+            'city',
+            'province',
+            'postal_code',
+            'gender',
+            'birth_date'
         ]));
 
         return response()->json([
@@ -180,6 +186,54 @@ class AuthController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Password changed successfully'
+        ]);
+    }
+    public function getPersonalityStatus(Request $request)
+    {
+        $user = $request->user();
+
+        $hasCompleted = !is_null($user->extroversion) &&
+            !is_null($user->neuroticism) &&
+            !is_null($user->agreeableness) &&
+            !is_null($user->conscientiousness) &&
+            !is_null($user->openness);
+
+        return response()->json([
+            'success' => true,
+            'has_completed' => $hasCompleted,
+            'personality' => $hasCompleted ? [
+                'extroversion' => (float) $user->extroversion,
+                'neuroticism' => (float) $user->neuroticism,
+                'agreeableness' => (float) $user->agreeableness,
+                'conscientiousness' => (float) $user->conscientiousness,
+                'openness' => (float) $user->openness,
+            ] : null
+        ]);
+    }
+
+    public function savePersonality(Request $request)
+    {
+        $user = $request->user();
+
+        $request->validate([
+            'extroversion' => 'required|numeric|min:0|max:100',
+            'neuroticism' => 'required|numeric|min:0|max:100',
+            'agreeableness' => 'required|numeric|min:0|max:100',
+            'conscientiousness' => 'required|numeric|min:0|max:100',
+            'openness' => 'required|numeric|min:0|max:100',
+        ]);
+
+        $user->update([
+            'extroversion' => $request->extroversion,
+            'neuroticism' => $request->neuroticism,
+            'agreeableness' => $request->agreeableness,
+            'conscientiousness' => $request->conscientiousness,
+            'openness' => $request->openness,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Personality saved successfully'
         ]);
     }
 }

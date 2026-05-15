@@ -46,24 +46,31 @@ Route::get('/quotes/today', [QuoteController::class, 'getQuoteOfDay']);
 Route::get('/quotes', [QuoteController::class, 'getAllQuotes']);
 Route::post('/quotes/by-mood', [QuoteController::class, 'getQuotesByMood']);
 Route::get('/quotes/mood/{mood}', [QuoteController::class, 'getQuotesByMoodTag']);
+Route::get('/quotes/community', [QuoteController::class, 'getAllUserQuotes']);
 
 // AUTH ROUTES
-Route::group([
-    'middleware' => ['api', 'auth:api'],
-], function () {
+Route::group(['middleware' => 'auth:api'], function () {
 
-    Route::group(['prefix' => 'auth'], function () {
-        Route::post('login', [AuthController::class, 'login'])->withoutMiddleware(['auth:api']);
-        Route::post('register', [AuthController::class, 'register'])->withoutMiddleware(['auth:api']);
-
+    // Auth Routes
+    Route::prefix('auth')->group(function () {
         Route::post('logout', [AuthController::class, 'logout']);
         Route::get('me', [AuthController::class, 'me']);
-
-        Route::put('/', [AuthController::class, 'updateAccount']);
-        Route::get('/auth/me', [AuthController::class, 'me']);
         Route::put('profile', [AuthController::class, 'updateProfile']);
         Route::put('change-password', [AuthController::class, 'changePassword']);
+        Route::get('personality-status', [AuthController::class, 'getPersonalityStatus']);  // ← tanpa /auth/
+        Route::post('personality', [AuthController::class, 'savePersonality']);  // ← tanpa /auth/
     });
+
+    // Cart Routes
+    Route::get('cart', [CartController::class, 'index']);
+    Route::post('cart', [CartController::class, 'store']);
+    Route::post('cart/minus', [CartController::class, 'minus']);
+    Route::delete('cart/{id}', [CartController::class, 'destroy']);
+
+    // Wishlist Routes
+    Route::get('wishlist', [WishlistController::class, 'index']);
+    Route::post('wishlist', [WishlistController::class, 'store']);
+    Route::delete('wishlist/{id}', [WishlistController::class, 'destroy']);
 
     // Payment & Delivery
     Route::get('payment-methods', [PaymentMethodController::class, 'index']);
@@ -76,30 +83,22 @@ Route::group([
     Route::delete('delivery-addresses/{id}', [DeliveryAddressController::class, 'destroy']);
     Route::patch('delivery-addresses/{id}/default', [DeliveryAddressController::class, 'setDefault']);
 
-    // Wishlist
-    Route::get('wishlist', [WishlistController::class, 'index']);
-    Route::post('wishlist', [WishlistController::class, 'store']);
-    Route::delete('wishlist/{id}', [WishlistController::class, 'destroy']);
-
-    // Cart
-    Route::get('cart', [CartController::class, 'index']);
-    Route::post('cart', [CartController::class, 'store']);
-    Route::post('/cart/minus', [CartController::class, 'minus']);
-    Route::delete('/cart/{id}', [CartController::class, 'destroy']);
-
     // Checkout & Transactions
-    Route::get('/checkout/data', [CheckoutController::class, 'getCheckoutData']);
-    Route::post('/checkout', [CheckoutController::class, 'createTransaction']);
-    Route::post('/transactions/{id}/upload-payment', [CheckoutController::class, 'uploadPaymentProof']);
-    Route::get('/transactions', [CheckoutController::class, 'getUserTransactions']);
-    Route::get('/transactions/{id}', [CheckoutController::class, 'getTransactionDetail']);
+    Route::get('checkout/data', [CheckoutController::class, 'getCheckoutData']);
+    Route::post('checkout', [CheckoutController::class, 'createTransaction']);
+    Route::post('transactions/{id}/upload-payment', [CheckoutController::class, 'uploadPaymentProof']);
+    Route::get('transactions', [CheckoutController::class, 'getUserTransactions']);
+    Route::get('transactions/{id}', [CheckoutController::class, 'getTransactionDetail']);
 
     // QUOTE ROUTES (Authenticated)
-    Route::post('/quotes/save/{id}', [QuoteController::class, 'saveQuote']);
-    Route::delete('/quotes/save/{id}', [QuoteController::class, 'unsaveQuote']);
-    Route::get('/quotes/saved', [QuoteController::class, 'getSavedQuotes']);
-    Route::post('/quotes/add', [QuoteController::class, 'addQuote']);
-    Route::delete('/quotes/delete/{id}', [QuoteController::class, 'deleteQuote']);
-    Route::post('/quotes/like/{id}', [QuoteController::class, 'likeQuote']);
-    Route::get('/quotes/community', [QuoteController::class, 'getAllUserQuotes']);
+    Route::post('quotes/save/{id}', [QuoteController::class, 'saveQuote']);
+    Route::delete('quotes/save/{id}', [QuoteController::class, 'unsaveQuote']);
+    Route::get('quotes/saved', [QuoteController::class, 'getSavedQuotes']);
+    Route::post('quotes/add', [QuoteController::class, 'addQuote']);
+    Route::delete('quotes/delete/{id}', [QuoteController::class, 'deleteQuote']);
+    Route::post('quotes/like/{id}', [QuoteController::class, 'likeQuote']);
 });
+
+// PUBLIC LOGIN & REGISTER (No Auth)
+Route::post('auth/login', [AuthController::class, 'login']);
+Route::post('auth/register', [AuthController::class, 'register']);
