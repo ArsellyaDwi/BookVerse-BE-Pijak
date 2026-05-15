@@ -2,16 +2,16 @@
 
 @section('content')
 <div class="container mx-auto">
-    <x-common.page-breadcrumb pageTitle="AI Recommendation Logs" />
+    <x-common.page-breadcrumb pageTitle="AI Emotion Analysis Logs" />
 
     <!-- Statistics Cards -->
     <div class="grid grid-cols-1 gap-4 mb-6 sm:grid-cols-2 lg:grid-cols-4">
-        <!-- Total Recommendations Card -->
+        <!-- Total Analyses Card -->
         <div class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03]">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Total Recommendations</p>
-                    <p class="text-2xl font-semibold text-gray-800 dark:text-white/90">{{ number_format($totalRecommendations) }}</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Total Emotion Analyses</p>
+                    <p class="text-2xl font-semibold text-gray-800 dark:text-white/90">{{ number_format($totalAnalyses) }}</p>
                 </div>
                 <div class="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30">
                     <svg class="h-6 w-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -36,12 +36,12 @@
             </div>
         </div>
 
-        <!-- Average Recommendations Card -->
+        <!-- Average Emotions Card -->
         <div class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03]">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Avg Books/Request</p>
-                    <p class="text-2xl font-semibold text-gray-800 dark:text-white/90">{{ number_format($averageRecommendations, 1) }}</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Avg Emotions/Request</p>
+                    <p class="text-2xl font-semibold text-gray-800 dark:text-white/90">{{ number_format($averageEmotions, 1) }}</p>
                 </div>
                 <div class="flex h-12 w-12 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900/30">
                     <svg class="h-6 w-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -57,8 +57,8 @@
                 <div>
                     <p class="text-sm text-gray-500 dark:text-gray-400">Latest Activity</p>
                     <p class="text-sm font-semibold text-gray-800 dark:text-white/90">
-                        @if($latestRecommendation)
-                            {{ $latestRecommendation->create_at->diffForHumans() }}
+                        @if($latestAnalysis)
+                            {{ $latestAnalysis->create_at->diffForHumans() }}
                         @else
                             No data
                         @endif
@@ -77,8 +77,8 @@
         <!-- Header -->
         <div class="flex flex-col gap-2 px-5 mb-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
             <div>
-                <h3 class="text-lg font-semibold text-gray-800 dark:text-white/90">AI Recommendation History</h3>
-                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Track all AI-generated book recommendations</p>
+                <h3 class="text-lg font-semibold text-gray-800 dark:text-white/90">AI Emotion Analysis History</h3>
+                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Track all AI-generated emotion detection results</p>
             </div>
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
                 <!-- Filter Form -->
@@ -122,17 +122,17 @@
                            class="h-[42px] w-full rounded-lg border border-gray-300 bg-transparent py-2.5 pl-[42px] pr-4 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 xl:w-[250px]"/>
                 </form>
                 
-                <a href="{{ route('admin.ai.recommendation-logs.export', request()->all()) }}" 
+                {{-- <a href="{{ route('admin.ai.recommendation-logs.export', request()->all()) }}" 
                    class="inline-flex items-center justify-center gap-2 rounded-lg bg-green-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-600">
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
                     </svg>
                     Export CSV
-                </a>
+                </a> --}}
 
-                @if($totalRecommendations > 0)
+                @if($totalAnalyses > 0)
                 <form method="POST" action="{{ route('admin.ai.recommendation-logs.clear-all') }}" 
-                      onsubmit="return confirm('Are you sure you want to clear all recommendation logs? This action cannot be undone.')"
+                      onsubmit="return confirm('Are you sure you want to clear all emotion analysis logs? This action cannot be undone.')"
                       class="inline">
                     @csrf
                     @method('DELETE')
@@ -183,8 +183,9 @@
                         <tr class="border-gray-200 border-y dark:border-gray-700">
                             <th scope="col" class="px-4 py-3 font-normal text-gray-500 text-start text-theme-sm dark:text-gray-400">ID</th>
                             <th scope="col" class="px-4 py-3 font-normal text-gray-500 text-start text-theme-sm dark:text-gray-400">User</th>
-                            <th scope="col" class="px-4 py-3 font-normal text-gray-500 text-start text-theme-sm dark:text-gray-400">Input</th>
-                            <th scope="col" class="px-4 py-3 font-normal text-gray-500 text-start text-theme-sm dark:text-gray-400">Recommendations</th>
+                            <th scope="col" class="px-4 py-3 font-normal text-gray-500 text-start text-theme-sm dark:text-gray-400">Input Text</th>
+                            <th scope="col" class="px-4 py-3 font-normal text-gray-500 text-start text-theme-sm dark:text-gray-400">Top Emotion</th>
+                            <th scope="col" class="px-4 py-3 font-normal text-gray-500 text-start text-theme-sm dark:text-gray-400">All Emotions</th>
                             <th scope="col" class="px-4 py-3 font-normal text-gray-500 text-start text-theme-sm dark:text-gray-400">Created At</th>
                             <th scope="col" class="px-4 py-3 font-normal text-gray-500 text-center text-theme-sm dark:text-gray-400">Actions</th>
                         </tr>
@@ -203,30 +204,66 @@
                                         </svg>
                                     </div>
                                     <div>
-                                        <div class="text-sm font-medium text-gray-900 dark:text-white">{{ $log->user->name ?? 'N/A' }}</div>
-                                        <div class="text-xs text-gray-500 dark:text-gray-400">{{ $log->user->email ?? 'N/A' }}</div>
+                                        <div class="text-sm font-medium text-gray-900 dark:text-white">{{ $log->user->name ?? 'Guest User' }}</div>
+                                        <div class="text-xs text-gray-500 dark:text-gray-400">{{ $log->user->email ?? 'No email' }}</div>
                                     </div>
                                 </div>
                             </td>
                             <td class="px-4 py-4">
                                 <div class="text-sm text-gray-700 dark:text-gray-300 max-w-xs truncate" title="{{ $log->input }}">
-                                    {{ Str::limit($log->input, 50) }}
+                                    {{ Str::limit($log->input ?? 'No input', 50) }}
                                 </div>
                             </td>
                             <td class="px-4 py-4 whitespace-nowrap">
-                                <div class="flex items-center gap-1">
-                                    <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 text-xs font-semibold">
-                                        {{ $log->books->count() }}
-                                    </span>
-                                    <span class="text-xs text-gray-500 dark:text-gray-400">books</span>
+                                @php
+                                    $emotions = is_array($log->result) ? $log->result : [];
+                                    $topEmotion = !empty($emotions) ? $emotions[0] : null;
+                                @endphp
+                                @if($topEmotion)
+                                    <div class="flex flex-col">
+                                        <span class="inline-flex px-2 py-1 text-xs font-medium rounded-full 
+                                            @if($topEmotion['emotion'] == 'happiness') bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300
+                                            @elseif($topEmotion['emotion'] == 'sadness') bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300
+                                            @elseif($topEmotion['emotion'] == 'anger') bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300
+                                            @elseif($topEmotion['emotion'] == 'fear') bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300
+                                            @elseif($topEmotion['emotion'] == 'love') bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-300
+                                            @elseif($topEmotion['emotion'] == 'gratitude') bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300
+                                            @elseif($topEmotion['emotion'] == 'relief') bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300
+                                            @else bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300
+                                            @endif">
+                                            {{ ucfirst($topEmotion['emotion']) }}
+                                        </span>
+                                        <span class="text-xs text-gray-500 mt-1">
+                                            {{ number_format($topEmotion['confidence'] * 100, 1) }}% confidence
+                                        </span>
+                                    </div>
+                                @else
+                                    <span class="text-xs text-gray-400">No data</span>
+                                @endif
+                            </td>
+                            <td class="px-4 py-4">
+                                <div class="flex flex-wrap gap-1">
+                                    @foreach($emotions as $emotion)
+                                        @if($loop->index < 3)
+                                            <span class="inline-flex px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                                                {{ ucfirst($emotion['emotion']) }}
+                                                <span class="ml-1 text-xs opacity-75">({{ number_format($emotion['confidence'] * 100, 0) }}%)</span>
+                                            </span>
+                                        @endif
+                                    @endforeach
+                                    @if(count($emotions) > 3)
+                                        <span class="inline-flex px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-500">
+                                            +{{ count($emotions) - 3 }} more
+                                        </span>
+                                    @endif
                                 </div>
                             </td>
                             <td class="px-4 py-4 whitespace-nowrap">
                                 <div class="text-sm text-gray-500 dark:text-gray-400">
-                                    {{ $log->create_at->format('M d, Y') }}
+                                    {{ $log->create_at ? $log->create_at->format('M d, Y') : 'N/A' }}
                                 </div>
                                 <div class="text-xs text-gray-400 dark:text-gray-500">
-                                    {{ $log->create_at->format('h:i:s A') }}
+                                    {{ $log->create_at ? $log->create_at->format('h:i:s A') : 'N/A' }}
                                 </div>
                             </td>
                             <td class="px-4 py-4 whitespace-nowrap">
@@ -243,7 +280,7 @@
                                     
                                     <!-- Delete Button -->
                                     <form method="POST" action="{{ route('admin.ai.recommendation-logs.destroy', $log) }}" 
-                                          onsubmit="return confirm('Are you sure you want to delete this recommendation log?')"
+                                          onsubmit="return confirm('Are you sure you want to delete this emotion analysis log?')"
                                           class="inline">
                                         @csrf
                                         @method('DELETE')
@@ -260,13 +297,13 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="6" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                            <td colspan="7" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
                                 <div class="flex flex-col items-center justify-center">
                                     <svg class="w-12 h-12 mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                                     </svg>
-                                    <p class="text-lg font-medium">No recommendation logs found</p>
-                                    <p class="text-sm">AI recommendations will appear here when users request them</p>
+                                    <p class="text-lg font-medium">No emotion analysis logs found</p>
+                                    <p class="text-sm">AI emotion analysis results will appear here when users submit text</p>
                                 </div>
                             </td>
                         </tr>

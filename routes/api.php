@@ -1,22 +1,22 @@
 <?php
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\API\ContactController;
+use App\Http\Controllers\Api\GenreController;
+use App\Http\Controllers\Api\SubscribeController;
+use App\Http\Controllers\QuoteController;
+use App\Http\Controllers\user\AIContentBasedController;
 use App\Http\Controllers\user\AuthController;
 use App\Http\Controllers\user\BookController;
 use App\Http\Controllers\user\CartController;
 use App\Http\Controllers\user\CheckoutController;
 use App\Http\Controllers\user\DeliveryAddressController;
 use App\Http\Controllers\user\DeliveryMethodController;
+use App\Http\Controllers\user\EmotionController;
 use App\Http\Controllers\user\ForgotPasswordController;
-use App\Http\Controllers\Api\GenreController;
 use App\Http\Controllers\user\PaymentMethodController;
 use App\Http\Controllers\user\ResetPasswordController;
 use App\Http\Controllers\user\WishlistController;
-use App\Http\Controllers\API\ContactController;
-use App\Http\Controllers\Api\SubscribeController;
-use App\Http\Controllers\user\EmotionController;
-use App\Http\Controllers\QuoteController;
+use Illuminate\Support\Facades\Route;
 
 // PUBLIC ROUTES (No Auth Required)
 Route::post('auth/forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail']);
@@ -47,6 +47,9 @@ Route::get('/quotes', [QuoteController::class, 'getAllQuotes']);
 Route::post('/quotes/by-mood', [QuoteController::class, 'getQuotesByMood']);
 Route::get('/quotes/mood/{mood}', [QuoteController::class, 'getQuotesByMoodTag']);
 Route::get('/quotes/community', [QuoteController::class, 'getAllUserQuotes']);
+
+// CONTENT BASED RECOMMENDATIONS
+Route::get('content-based', [AIContentBasedController::class, 'index']);
 
 // AUTH ROUTES
 Route::group(['middleware' => 'auth:api'], function () {

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class AiRecommendationLog extends Model
 {
@@ -17,23 +18,50 @@ class AiRecommendationLog extends Model
 
     protected $casts = [
         'create_at' => 'datetime',
-        'result' => 'array', // Automatically cast JSON to array
+        'result' => 'array', // Automatically decode JSON to array
     ];
 
-    public $timestamps = false; // Using custom create_at instead of created_at
+    public $timestamps = false;
 
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class)->withDefault([
+            'name' => 'Guest User'
+        ]);
     }
 
-    public function recommendationItems()
+    // Helper method to get top emotion
+    public function getTopEmotionAttribute()
     {
-        return $this->hasMany(AiRecommendationItem::class, 'ai_recommendation_log_id');
+        if (empty($this->result) || !is_array($this->result)) {
+            return null;
+        }
+        return $this->result[0] ?? null;
     }
 
-    public function books()
+    // Helper method to get all emotions
+    public function getEmotionsListAttribute()
     {
-        return $this->belongsToMany(Book::class, 'ai_recommendation_items', 'ai_recommendation_log_id', 'book_id');
+        if (empty($this->result) || !is_array($this->result)) {
+            return [];
+        }
+        return $this->result;
+    }
+
+    // Helper method to get emotion color
+    public function getEmotionColorAttribute()
+    {
+        $colors = [
+            'happiness' => 'green',
+            'sadness' => 'blue',
+            'anger' => 'red',
+            'fear' => 'purple',
+            'love' => 'pink',
+            'gratitude' => 'teal',
+            'relief' => 'indigo',
+        ];
+
+        $topEmotion = $this->top_emotion;
+        return $colors[$topEmotion['emotion'] ?? ''] ?? 'gray';
     }
 }

@@ -8,7 +8,7 @@ class MenuHelper
 {
     public static function getMainNavItems()
     {
-                $unreadCount = 0;
+        $unreadCount = 0;
         if (ContactMessage::count() > 0) {
             $unreadCount = ContactMessage::where('status', 'unread')->count();
         }
@@ -22,8 +22,8 @@ class MenuHelper
                 'icon' => 'ai-assistant',
                 'name' => 'AI',
                 'subItems' => [
-                    ['name' => 'Emotion Dataset', 'path' => '/ai/emotion-datasets'],
-                    ['name' => 'Training Logs', 'path' => '/ai/training-logs'],
+                    // ['name' => 'Emotion Dataset', 'path' => '/ai/emotion-datasets'],
+                    // ['name' => 'Training Logs', 'path' => '/ai/training-logs'],
                     ['name' => 'AI Recommendation Logs', 'path' => '/ai/recommendation-logs'],
                 ],
             ],

@@ -12,7 +12,7 @@
                 <div>
                     <p class="text-sm text-gray-500 dark:text-gray-400">Total Revenue</p>
                     <p class="text-2xl font-semibold text-gray-800 dark:text-white/90">Rp {{ number_format($totalRevenue, 0, ',', '.') }}</p>
-                    @if($revenueGrowth != 0)
+                    @if(isset($revenueGrowth) && $revenueGrowth != 0)
                         <p class="text-xs {{ $revenueGrowth >= 0 ? 'text-green-600' : 'text-red-600' }} mt-1">
                             {{ $revenueGrowth >= 0 ? '↑' : '↓' }} {{ number_format(abs($revenueGrowth), 1) }}% vs last month
                         </p>
@@ -67,7 +67,7 @@
                 <div>
                     <p class="text-sm text-gray-500 dark:text-gray-400">AI Recommendations</p>
                     <p class="text-2xl font-semibold text-gray-800 dark:text-white/90">{{ number_format($totalRecommendations) }}</p>
-                    @if($recommendationGrowth != 0)
+                    @if(isset($recommendationGrowth) && $recommendationGrowth != 0)
                         <p class="text-xs {{ $recommendationGrowth >= 0 ? 'text-green-600' : 'text-red-600' }} mt-1">
                             {{ $recommendationGrowth >= 0 ? '↑' : '↓' }} {{ number_format(abs($recommendationGrowth), 1) }}% vs last month
                         </p>
@@ -171,48 +171,6 @@
         </div>
     </div>
 
-    <!-- Popular Books from AI Recommendations -->
-    <div class="rounded-2xl border border-gray-200 bg-white pt-4 mb-6 dark:border-gray-800 dark:bg-white/[0.03]">
-        <div class="px-5 mb-4 sm:px-6">
-            <h3 class="text-lg font-semibold text-gray-800 dark:text-white/90">Most Recommended Books by AI</h3>
-            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Top books that customers are being recommended</p>
-        </div>
-        <div class="overflow-hidden">
-            <div class="max-w-full px-5 overflow-x-auto">
-                <table class="min-w-full">
-                    <thead>
-                        <tr class="border-gray-200 border-y dark:border-gray-700">
-                            <th class="px-4 py-3 text-left text-sm font-medium text-gray-500">#</th>
-                            <th class="px-4 py-3 text-left text-sm font-medium text-gray-500">Book Title</th>
-                            <th class="px-4 py-3 text-left text-sm font-medium text-gray-500">Author</th>
-                            <th class="px-4 py-3 text-center text-sm font-medium text-gray-500">Times Recommended</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-                        @forelse($popularBooks as $index => $book)
-                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                            <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{{ $index + 1 }}</td>
-                            <td class="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">{{ $book->title }}</td>
-                            <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{{ $book->author }}</td>
-                            <td class="px-4 py-3 text-center">
-                                <span class="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">
-                                    {{ $book->recommendation_count }} times
-                                </span>
-                            </td>
-                        </tr>
-                        @empty
-                        <tr>
-                            <td colspan="4" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
-                                No recommendation data available yet
-                            </td>
-                        </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
     <!-- Recent Transactions & AI Recommendations -->
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <!-- Recent Transactions -->
@@ -256,7 +214,7 @@
                                             'cancelled' => 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
                                         ];
                                     @endphp
-                                    <span class="inline-flex px-2 py-1 text-xs font-medium rounded-full {{ $statusColors[$transaction->status] }}">
+                                    <span class="inline-flex px-2 py-1 text-xs font-medium rounded-full {{ $statusColors[$transaction->status] ?? 'bg-gray-100 text-gray-800' }}">
                                         {{ ucfirst(str_replace('_', ' ', $transaction->status)) }}
                                     </span>
                                 </td>
@@ -279,8 +237,8 @@
             <div class="px-5 mb-4 sm:px-6">
                 <div class="flex items-center justify-between">
                     <div>
-                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white/90">Recent AI Recommendations</h3>
-                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Latest AI book suggestions</p>
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white/90">Recent AI Emotion Analysis</h3>
+                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Latest emotion detection results</p>
                     </div>
                     <a href="{{ route('admin.ai.recommendation-logs.index') }}" class="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400">
                         View All →
@@ -293,31 +251,78 @@
                         <thead>
                             <tr class="border-gray-200 border-y dark:border-gray-700">
                                 <th class="px-4 py-3 text-left text-sm font-medium text-gray-500">User</th>
-                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-500">Input</th>
-                                <th class="px-4 py-3 text-center text-sm font-medium text-gray-500">Books</th>
+                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-500">Input Text</th>
+                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-500">Top Emotion</th>
+                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-500">All Emotions</th>
                                 <th class="px-4 py-3 text-left text-sm font-medium text-gray-500">Date</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                             @forelse($recentRecommendations as $rec)
                             <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                                <td class="px-4 py-3 text-sm text-gray-900 dark:text-white">{{ $rec->user->name ?? 'N/A' }}</td>
-                                <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 max-w-xs truncate">
-                                    {{ Str::limit($rec->input, 40) }}
+                                <td class="px-4 py-3 text-sm text-gray-900 dark:text-white">
+                                    {{ $rec->user->name ?? 'Guest User' }}
                                 </td>
-                                <td class="px-4 py-3 text-center">
-                                    <span class="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">
-                                        {{ $rec->books->count() }} books
-                                    </span>
+                                <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 max-w-xs">
+                                    <div class="truncate" title="{{ $rec->input ?? 'No input' }}">
+                                        {{ Str::limit($rec->input ?? 'No input', 50) }}
+                                    </div>
+                                </td>
+                                <td class="px-4 py-3">
+                                    @php
+                                        $emotions = is_array($rec->result) ? $rec->result : [];
+                                        $topEmotion = !empty($emotions) ? $emotions[0] : null;
+                                    @endphp
+                                    @if($topEmotion)
+                                        <div class="flex flex-col">
+                                            <span class="inline-flex px-2 py-1 text-xs font-medium rounded-full 
+                                                @if($topEmotion['emotion'] == 'happiness') bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300
+                                                @elseif($topEmotion['emotion'] == 'sadness') bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300
+                                                @elseif($topEmotion['emotion'] == 'anger') bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300
+                                                @elseif($topEmotion['emotion'] == 'fear') bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300
+                                                @elseif($topEmotion['emotion'] == 'love') bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-300
+                                                @elseif($topEmotion['emotion'] == 'gratitude') bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300
+                                                @elseif($topEmotion['emotion'] == 'relief') bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300
+                                                @else bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300
+                                                @endif">
+                                                {{ ucfirst($topEmotion['emotion']) }}
+                                            </span>
+                                            <span class="text-xs text-gray-500 mt-1">
+                                                {{ number_format($topEmotion['confidence'] * 100, 1) }}% confidence
+                                            </span>
+                                        </div>
+                                    @else
+                                        <span class="text-xs text-gray-400">No data</span>
+                                    @endif
+                                </td>
+                                <td class="px-4 py-3">
+                                    <div class="flex flex-wrap gap-1">
+                                        @foreach(($emotions) as $emotion)
+                                            @if($loop->index > 0 && $loop->index < 4)
+                                                <span class="inline-flex px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                                                    {{ ucfirst($emotion['emotion']) }}
+                                                    <span class="ml-1 text-xs opacity-75">({{ number_format($emotion['confidence'] * 100, 0) }}%)</span>
+                                                </span>
+                                            @endif
+                                        @endforeach
+                                        @if(count($emotions) > 4)
+                                            <span class="inline-flex px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-500">
+                                                +{{ count($emotions) - 4 }} more
+                                            </span>
+                                        @endif
+                                    </div>
                                 </td>
                                 <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-                                    {{ $rec->create_at->diffForHumans() }}
+                                    {{ $rec->create_at ? $rec->create_at->format('M d, H:i') : 'N/A' }}
+                                    <div class="text-xs text-gray-400">
+                                        {{ $rec->create_at ? $rec->create_at->diffForHumans() : '' }}
+                                    </div>
                                 </td>
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="4" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
-                                    No AI recommendations yet
+                                <td colspan="5" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                                    No AI emotion analysis yet
                                 </td>
                             </tr>
                             @endforelse

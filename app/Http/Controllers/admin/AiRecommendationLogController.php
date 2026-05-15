@@ -9,11 +9,11 @@ use Illuminate\Http\Request;
 class AiRecommendationLogController extends Controller
 {
     /**
-     * Display a listing of recommendation logs.
+     * Display a listing of emotion analysis logs.
      */
     public function index(Request $request)
     {
-        $query = AiRecommendationLog::with('user', 'books');
+        $query = AiRecommendationLog::with('user');
 
         // Search functionality
         if ($request->has('search') && $request->search != '') {
@@ -40,51 +40,60 @@ class AiRecommendationLogController extends Controller
         $logs->appends($request->all());
 
         // Get statistics
-        $totalRecommendations = AiRecommendationLog::count();
-        $totalUsers = AiRecommendationLog::distinct('user_id')->count('user_id');
-        $averageRecommendations = AiRecommendationLog::withCount('recommendationItems')->get()->avg('recommendation_items_count') ?? 0;
-        $latestRecommendation = AiRecommendationLog::latest('create_at')->first();
+        $totalAnalyses = AiRecommendationLog::count();
+        $totalUsers = AiRecommendationLog::whereNotNull('user_id')->distinct('user_id')->count('user_id');
 
-        return view('pages.ai.recommendation-logs.index', compact('logs', 'totalRecommendations', 'totalUsers', 'averageRecommendations', 'latestRecommendation'));
+        // Calculate average emotions per analysis
+        $allResults = AiRecommendationLog::whereNotNull('result')->get(['result']);
+        $totalEmotions = 0;
+        foreach ($allResults as $result) {
+            $emotions = is_array($result->result) ? $result->result : [];
+            $totalEmotions += count($emotions);
+        }
+        $averageEmotions = $totalAnalyses > 0 ? round($totalEmotions / $totalAnalyses, 1) : 0;
+
+        $latestAnalysis = AiRecommendationLog::latest('create_at')->first();
+
+        return view('pages.ai.recommendation-logs.index', compact('logs', 'totalAnalyses', 'totalUsers', 'averageEmotions', 'latestAnalysis'));
     }
 
     /**
-     * Display the specified recommendation log.
+     * Display the specified emotion analysis log.
      */
-    public function show(AiRecommendationLog $aiRecommendationLog)
+    public function show(string $id)
     {
-        $aiRecommendationLog->load('user', 'books', 'recommendationItems.book');
+        $aiRecommendationLog = AiRecommendationLog::find($id)->load('user');
         return view('pages.ai.recommendation-logs.show', compact('aiRecommendationLog'));
     }
 
     /**
-     * Remove the specified recommendation log.
+     * Remove the specified emotion analysis log.
      */
     public function destroy(AiRecommendationLog $aiRecommendationLog)
     {
         $aiRecommendationLog->delete();
 
         return redirect()->route('admin.ai.recommendation-logs.index')
-            ->with('success', 'Recommendation log deleted successfully!');
+            ->with('success', 'Emotion analysis log deleted successfully!');
     }
 
     /**
-     * Clear all recommendation logs.
+     * Clear all emotion analysis logs.
      */
     public function clearAll()
     {
         AiRecommendationLog::truncate();
 
         return redirect()->route('admin.ai.recommendation-logs.index')
-            ->with('success', 'All recommendation logs cleared successfully!');
+            ->with('success', 'All emotion analysis logs cleared successfully!');
     }
 
     /**
-     * Export recommendation logs to CSV
+     * Export emotion analysis logs to CSV
      */
     public function export(Request $request)
     {
-        $query = AiRecommendationLog::with('user', 'books');
+        $query = AiRecommendationLog::with('user');
 
         if ($request->has('date_from') && $request->date_from != '') {
             $query->whereDate('create_at', '>=', $request->date_from);
@@ -96,26 +105,34 @@ class AiRecommendationLogController extends Controller
 
         $logs = $query->orderBy('create_at', 'desc')->get();
 
-        $filename = 'recommendation_logs_' . date('Y-m-d_H-i-s') . '.csv';
+        $filename = 'emotion_analysis_logs_' . date('Y-m-d_H-i-s') . '.csv';
 
         $callback = function () use ($logs) {
             $file = fopen('php://output', 'w');
 
             // Add headers
-            fputcsv($file, ['ID', 'User Name', 'User Email', 'Input Text', 'Number of Recommendations', 'Books Recommended', 'Created At']);
+            fputcsv($file, ['ID', 'User Name', 'User Email', 'Input Text', 'Top Emotion', 'Top Confidence', 'All Emotions', 'Created At']);
 
             // Add data rows
             foreach ($logs as $log) {
-                $bookTitles = $log->books->pluck('title')->implode(' | ');
+                $emotions = is_array($log->result) ? $log->result : [];
+                $topEmotion = !empty($emotions) ? $emotions[0] : null;
+
+                $allEmotionsStr = '';
+                foreach ($emotions as $emotion) {
+                    $allEmotionsStr .= $emotion['emotion'] . ' (' . number_format($emotion['confidence'] * 100, 1) . '%), ';
+                }
+                $allEmotionsStr = rtrim($allEmotionsStr, ', ');
 
                 fputcsv($file, [
                     $log->id,
-                    $log->user->name ?? 'N/A',
+                    $log->user->name ?? 'Guest User',
                     $log->user->email ?? 'N/A',
-                    $log->input,
-                    $log->books->count(),
-                    $bookTitles,
-                    $log->create_at->format('Y-m-d H:i:s'),
+                    $log->input ?? 'No input',
+                    $topEmotion['emotion'] ?? 'N/A',
+                    $topEmotion ? number_format($topEmotion['confidence'] * 100, 1) . '%' : 'N/A',
+                    $allEmotionsStr ?: 'No emotions',
+                    $log->create_at ? $log->create_at->format('Y-m-d H:i:s') : 'N/A',
                 ]);
             }
 

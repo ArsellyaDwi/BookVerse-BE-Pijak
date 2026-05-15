@@ -14,10 +14,6 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        // Get current month and previous month dates
-        $currentMonth = now()->startOfMonth();
-        $previousMonth = now()->subMonth()->startOfMonth();
-
         // Transaction Statistics
         $totalRevenue = Transaction::where('status', '!=', 'cancelled')->sum('total');
         $totalOrders = Transaction::count();
@@ -43,8 +39,9 @@ class DashboardController extends Controller
 
         // AI Recommendation Statistics
         $totalRecommendations = AiRecommendationLog::count();
-        $uniqueUsersRecommended = AiRecommendationLog::distinct('user_id')->count('user_id');
-        $avgRecommendationsPerUser = $totalRecommendations > 0
+        $uniqueUsersRecommended = AiRecommendationLog::whereNotNull('user_id')->distinct('user_id')->count('user_id');
+
+        $avgRecommendationsPerUser = $uniqueUsersRecommended > 0
             ? round($totalRecommendations / $uniqueUsersRecommended, 1)
             : 0;
 
@@ -60,18 +57,10 @@ class DashboardController extends Controller
             ? (($recommendationsThisMonth - $recommendationsLastMonth) / $recommendationsLastMonth) * 100
             : ($recommendationsThisMonth > 0 ? 100 : 0);
 
-        // Get popular recommended books
-        $popularBooks = DB::table('ai_recommendation_items')
-            ->join('books', 'ai_recommendation_items.book_id', '=', 'books.id')
-            ->select('books.id', 'books.title', 'books.author', DB::raw('count(*) as recommendation_count'))
-            ->groupBy('books.id', 'books.title', 'books.author')
-            ->orderBy('recommendation_count', 'desc')
-            ->limit(5)
-            ->get();
-
         // Customer Statistics
-        $totalCustomers = User::where('role', '=', 'customer')->count();
-        $newCustomersThisMonth = User::where('role', '=', 'customer')->whereMonth('created_at', now()->month)
+        $totalCustomers = User::where('role', 'customer')->count();
+        $newCustomersThisMonth = User::where('role', 'customer')
+            ->whereMonth('created_at', now()->month)
             ->whereYear('created_at', now()->year)
             ->count();
 
@@ -86,7 +75,7 @@ class DashboardController extends Controller
             ->limit(10)
             ->get();
 
-        // Recent AI Recommendations
+        // Recent AI Recommendations - handle nullable user
         $recentRecommendations = AiRecommendationLog::with('user')
             ->orderBy('create_at', 'desc')
             ->limit(10)
@@ -132,7 +121,6 @@ class DashboardController extends Controller
             'avgRecommendationsPerUser',
             'recommendationsThisMonth',
             'recommendationGrowth',
-            'popularBooks',
             'totalCustomers',
             'newCustomersThisMonth',
             'totalBooks',
