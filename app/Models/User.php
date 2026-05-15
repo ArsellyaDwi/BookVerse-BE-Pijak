@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Models;
+
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -9,7 +10,23 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 
-#[Fillable(['name', 'email', 'password', 'phone', 'gender', 'birth_date', 'address', 'city', 'province', 'postal_code'])]
+#[Fillable([
+    'name',
+    'email',
+    'password',
+    'phone',
+    'gender',
+    'birth_date',
+    'address',
+    'city',
+    'province',
+    'postal_code',
+    'extroversion',
+    'neuroticism',
+    'agreeableness',
+    'conscientiousness',
+    'openness'
+])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable implements JWTSubject
 {
@@ -70,7 +87,7 @@ class User extends Authenticatable implements JWTSubject
     {
         return $this->hasMany(AiRecommendationLog::class);
     }
-/**
+    /**
      * Get all quotes posted by this user
      */
     public function quotes()

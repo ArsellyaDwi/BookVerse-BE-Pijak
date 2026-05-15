@@ -60,8 +60,8 @@ Route::group(['middleware' => 'auth:api'], function () {
         Route::get('me', [AuthController::class, 'me']);
         Route::put('profile', [AuthController::class, 'updateProfile']);
         Route::put('change-password', [AuthController::class, 'changePassword']);
-        Route::get('personality-status', [AuthController::class, 'getPersonalityStatus']);  // ← tanpa /auth/
-        Route::post('personality', [AuthController::class, 'savePersonality']);  // ← tanpa /auth/
+        Route::get('personality-status', [AuthController::class, 'getPersonalityStatus']);
+        Route::post('personality', [AuthController::class, 'savePersonality']);
     });
 
     // Cart Routes

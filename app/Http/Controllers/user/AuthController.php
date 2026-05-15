@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
 
 class AuthController extends Controller
@@ -188,6 +189,7 @@ class AuthController extends Controller
             'message' => 'Password changed successfully'
         ]);
     }
+
     public function getPersonalityStatus(Request $request)
     {
         $user = $request->user();
@@ -198,42 +200,111 @@ class AuthController extends Controller
             !is_null($user->conscientiousness) &&
             !is_null($user->openness);
 
+        $genres = [];
+        if ($hasCompleted) {
+            $genres = $this->getGenreRecommendations([
+                'openness' => (float) $user->openness,
+                'conscientiousness' => (float) $user->conscientiousness,
+                'extroversion' => (float) $user->extroversion,
+                'agreeableness' => (float) $user->agreeableness,
+                'neuroticism' => (float) $user->neuroticism,
+            ]);
+        }
+
         return response()->json([
             'success' => true,
-            'has_completed' => $hasCompleted,
-            'personality' => $hasCompleted ? [
-                'extroversion' => (float) $user->extroversion,
-                'neuroticism' => (float) $user->neuroticism,
-                'agreeableness' => (float) $user->agreeableness,
-                'conscientiousness' => (float) $user->conscientiousness,
-                'openness' => (float) $user->openness,
-            ] : null
+            'data' => [
+                'has_completed' => $hasCompleted,
+                'personality' => $hasCompleted ? [
+                    'extroversion' => (float) $user->extroversion,
+                    'neuroticism' => (float) $user->neuroticism,
+                    'agreeableness' => (float) $user->agreeableness,
+                    'conscientiousness' => (float) $user->conscientiousness,
+                    'openness' => (float) $user->openness,
+                ] : null,
+                'genres' => $genres
+            ],
         ]);
+    }
+
+    private function getGenreRecommendations($personality)
+    {
+        $recommendations = [];
+
+        if ($personality['openness'] > 70) {
+            $recommendations[] = ['genre' => 'Science Fiction', 'score' => $personality['openness']];
+        }
+        if ($personality['openness'] > 60) {
+            $recommendations[] = ['genre' => 'Fantasy', 'score' => $personality['openness']];
+        }
+        if ($personality['conscientiousness'] > 70) {
+            $recommendations[] = ['genre' => 'Self Help', 'score' => $personality['conscientiousness']];
+        }
+        if ($personality['conscientiousness'] > 60) {
+            $recommendations[] = ['genre' => 'Business', 'score' => $personality['conscientiousness']];
+        }
+        if ($personality['extroversion'] > 70) {
+            $recommendations[] = ['genre' => 'Romance', 'score' => $personality['extroversion']];
+        }
+        if ($personality['extroversion'] > 60) {
+            $recommendations[] = ['genre' => 'Adventure', 'score' => $personality['extroversion']];
+        }
+        if ($personality['agreeableness'] > 70) {
+            $recommendations[] = ['genre' => 'Fiction', 'score' => $personality['agreeableness']];
+        }
+        if ($personality['neuroticism'] > 60) {
+            $recommendations[] = ['genre' => 'Poetry', 'score' => $personality['neuroticism']];
+        }
+
+        usort($recommendations, function ($a, $b) {
+            return $b['score'] <=> $a['score'];
+        });
+
+        return array_slice($recommendations, 0, 5);
     }
 
     public function savePersonality(Request $request)
     {
         $user = $request->user();
 
-        $request->validate([
-            'extroversion' => 'required|numeric|min:0|max:100',
-            'neuroticism' => 'required|numeric|min:0|max:100',
-            'agreeableness' => 'required|numeric|min:0|max:100',
-            'conscientiousness' => 'required|numeric|min:0|max:100',
-            'openness' => 'required|numeric|min:0|max:100',
-        ]);
 
-        $user->update([
-            'extroversion' => $request->extroversion,
-            'neuroticism' => $request->neuroticism,
-            'agreeableness' => $request->agreeableness,
-            'conscientiousness' => $request->conscientiousness,
-            'openness' => $request->openness,
-        ]);
+        try {
+            $user = $request->user('api');
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Personality saved successfully'
-        ]);
+            $response = Http::withHeader('X-API-Key', env('AI_SERVICE_KEY'))
+                ->post(
+                    env('AI_SERVICE_URL') . '/personality/predict',
+                    $request->data,
+                );
+
+
+            if ($response->successful()) {
+                $aiResult = $response->json();
+
+                $user->update([
+                    'extroversion' => $aiResult['extroversion'],
+                    'neuroticism' => $aiResult['neuroticism'],
+                    'agreeableness' => $aiResult['agreeableness'],
+                    'conscientiousness' => $aiResult['conscientiousness'],
+                    'openness' => $aiResult['openness'],
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'data' => [],
+                    'message' => "Success",
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to connect to AI service: ' . $response,
+                ], 500);
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to connect to AI service: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

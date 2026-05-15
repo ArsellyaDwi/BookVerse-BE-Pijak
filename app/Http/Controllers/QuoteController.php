@@ -34,9 +34,10 @@ class QuoteController extends Controller
         ]);
 
         try {
-            $aiResponse = Http::post('http://localhost:5001/predict', [
+            $response = Http::withHeader('X-API-Key', env('AI_SERVICE_KEY'))->post(env('AI_SERVICE_URL') . '/emotion/predict', [
                 'text' => $request->text
             ]);
+
 
             if (!$aiResponse->successful()) {
                 return $this->getFallbackQuotes($request->text);
