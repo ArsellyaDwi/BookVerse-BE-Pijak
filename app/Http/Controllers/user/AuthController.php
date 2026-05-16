@@ -124,14 +124,14 @@ class AuthController extends Controller
         $user = auth('api')->user();
 
         $validator = Validator::make($request->all(), [
-            'name' => 'sometimes|string|max:255',
-            'phone' => 'sometimes|string|max:20',
-            'address' => 'sometimes|string',
-            'city' => 'sometimes|string|max:100',
-            'province' => 'sometimes|string|max:100',
-            'postal_code' => 'sometimes|string|max:10',
-            'gender' => 'sometimes|in:male,female,other',
-            'birth_date' => 'sometimes|date|before:today',
+            'name' => 'nullable|string|max:255',
+            'phone' => 'nullable|string|max:20',
+            'address' => 'nullable|string',
+            'city' => 'nullable|string|max:100',
+            'province' => 'nullable|string|max:100',
+            'postal_code' => 'nullable|string|max:10',
+            'gender' => 'nullable|in:Male,Female,Other',
+            'birth_date' => 'nullable|date|before:today',
         ]);
 
         if ($validator->fails()) {
