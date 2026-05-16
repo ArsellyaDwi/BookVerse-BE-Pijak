@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Book;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 
 class AIContentBasedController extends Controller
@@ -27,10 +28,12 @@ class AIContentBasedController extends Controller
                     ->post(env('AI_SERVICE_URL') . '/content-based/recommend');
 
                 if ($response->successful()) {
-                    $aiResult = $response->json();
 
+                    $aiResult = $response->json();
                     $recommendedBookIds = collect($aiResult['recommendations'])->pluck('book_id')->toArray();
-                    $books = Book::whereIn('id', $recommendedBookIds)->get();
+                    $books = Book::whereIn('id', $recommendedBookIds)
+                        ->orderByRaw(DB::raw("FIELD(id, " . implode(',', $recommendedBookIds) . ")"))
+                        ->get();
 
                     return response()->json([
                         'success' => true,
