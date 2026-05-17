@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\admin\AccountSettingController;
 use App\Http\Controllers\admin\AiEmotionDatasetController;
+use App\Http\Controllers\admin\AIEmotionRuleController;
 use App\Http\Controllers\admin\AiRecommendationLogController;
 use App\Http\Controllers\admin\AiTrainingLogController;
 use App\Http\Controllers\admin\AuthController;
@@ -38,10 +39,15 @@ Route::get('/return-policy', [PageController::class, 'returnPolicy'])->name('pag
 Route::middleware('admin')->name('admin.')->group(function () {
 
     Route::get('/', [DashboardController::class, 'index']);
+
+
     Route::resource('books', BookController::class);
     Route::resource('genres', GenreController::class);
     Route::resource('characters', CharacterController::class);
     Route::resource('payment-methods', PaymentMethodController::class);
+
+    Route::post('books/update-all-mood-tags', [BookController::class, 'updateAllMoodTags'])->name('books.update-all-mood-tags');
+    Route::post('books/{id}/update-mood-tags', [BookController::class, 'updateSingleBookMoodTags'])->name('books.update-single-mood-tags');
 
     Route::get('books/import/form', [BookController::class, 'showImportForm'])->name('books.import.form');
     Route::post('books/import', [BookController::class, 'import'])->name('books.import');
@@ -68,9 +74,13 @@ Route::middleware('admin')->name('admin.')->group(function () {
     Route::delete('contact-messages/{id}', [ContactMessageController::class, 'destroy'])->name('contact-messages.destroy');
     Route::post('contact-messages/bulk-delete', [ContactMessageController::class, 'bulkDelete'])->name('contact-messages.bulk-delete');
     Route::post('contact-messages/{id}/resend-email', [ContactMessageController::class, 'resendEmail'])
-    ->name('admin.contact-messages.resend-email');
+        ->name('admin.contact-messages.resend-email');
     Route::prefix('ai')->name('ai.')->group(function () {
         Route::resource('emotion-datasets', AiEmotionDatasetController::class);
+
+        Route::get('emotion-rules', [AIEmotionRuleController::class, 'index'])->name('emotion-rules.index');
+        Route::post('emotion-rules', [AIEmotionRuleController::class, 'storeOrUpdate'])->name('emotion-rules.store-or-update');
+        Route::post('/bulk', [AIEmotionRuleController::class, 'bulkUpdate'])->name('emotion-rules.bulk-update');
 
         Route::get('emotion-datasets/import/form', [AiEmotionDatasetController::class, 'showImportForm'])->name('emotion-datasets.import.form');
         Route::post('emotion-datasets/import', [AiEmotionDatasetController::class, 'import'])->name('emotion-datasets.import');

@@ -23,7 +23,7 @@ class MenuHelper
                 'name' => 'AI',
                 'subItems' => [
                     // ['name' => 'Emotion Dataset', 'path' => '/ai/emotion-datasets'],
-                    // ['name' => 'Training Logs', 'path' => '/ai/training-logs'],
+                    ['name' => 'AI Emotion Rule', 'path' => '/ai/emotion-rules'],
                     ['name' => 'AI Recommendation Logs', 'path' => '/ai/recommendation-logs'],
                 ],
             ],

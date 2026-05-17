@@ -8,6 +8,7 @@ use App\Models\Character;
 use App\Models\Genre;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -511,5 +512,63 @@ class BookController extends Controller
             'Content-Type' => 'text/csv',
             'Content-Disposition' => 'attachment; filename="books_import_template.csv"',
         ]);
+    }
+
+    public function updateAllMoodTags(Request $request)
+    {
+        try {
+
+            $response = Http::withHeader('X-API-Key', env('AI_SERVICE_KEY'))
+                ->post(env('AI_SERVICE_URL') . '/emotion/tag-books', []);
+
+            if ($response->successful()) {
+                $processed = $response->json()['books_processed'];
+
+                return response()->json([
+                    'success' => true,
+                    'message' => "Updated {$processed} books successfully",
+                    'updated' => $processed
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Ai Service Error",
+                ]);
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function updateSingleBookMoodTags(string $id)
+    {
+        try {
+
+            $response = Http::withHeader('X-API-Key', env('AI_SERVICE_KEY'))
+                ->post(env('AI_SERVICE_URL') . '/emotion/tag-books-single?book_id=' . $id);
+
+            if ($response->successful()) {
+                $processed = $response->json()['books_processed'];
+
+                return response()->json([
+                    'success' => true,
+                    'message' => "Updated {$processed} books successfully",
+                    'updated' => $processed
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Ai Service Error",
+                ]);
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 }

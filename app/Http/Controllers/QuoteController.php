@@ -34,7 +34,7 @@ class QuoteController extends Controller
         ]);
 
         try {
-            $response = Http::withHeader('X-API-Key', env('AI_SERVICE_KEY'))->post(env('AI_SERVICE_URL') . '/emotion/predict', [
+            $aiResponse = Http::withHeader('X-API-Key', env('AI_SERVICE_KEY'))->post(env('AI_SERVICE_URL') . '/emotion/predict', [
                 'text' => $request->text
             ]);
 

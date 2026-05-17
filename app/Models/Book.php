@@ -20,13 +20,15 @@ class Book extends Model
         'publish_date',
         'ratings',
         'cover_img',
-        'price'
+        'price',
+        'mood_tags'
     ];
 
     protected $casts = [
         'rating' => 'float',
         'price' => 'decimal:2',
-        'publish_date' => 'date'
+        'publish_date' => 'date',
+        'mood_tags' => 'array', // json of [{"emotion": "excitement", "confidence": 0.36395978927612305}, {"emotion": "fear", "confidence": 0.28080686926841736}]
     ];
 
     public function genres()

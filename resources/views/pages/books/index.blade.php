@@ -1,6 +1,98 @@
 @extends('layouts.app')
 
 @section('content')
+<div x-data="{ 
+    showLoadingModal: false, 
+    loadingMessage: 'Updating mood tags...', 
+    loadingProgress: 0, 
+    totalBooks: 0, 
+    processedBooks: 0,
+    
+    updateAllMoodTags() {
+        this.showLoadingModal = true;
+        this.loadingMessage = 'Updating all books...';
+        this.loadingProgress = 0;
+        this.processedBooks = 0;
+        
+        // Get total books count from the table rows
+        const totalRows = document.querySelectorAll('tbody tr:not(.empty-row)').length;
+        this.totalBooks = totalRows || 1;
+        
+        // Make AJAX request to update all books
+        fetch('{{ route("admin.books.update-all-mood-tags") }}', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({})
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                this.loadingMessage = 'Success! Reloading page...';
+                this.loadingProgress = 100;
+                this.processedBooks = data.updated || this.totalBooks;
+                
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            } else {
+                throw new Error(data.message || 'Failed to update mood tags');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            this.loadingMessage = 'Error: ' + error.message;
+            this.loadingProgress = 0;
+            setTimeout(() => {
+                this.showLoadingModal = false;
+            }, 3000);
+        });
+    },
+    
+    updateSingleBookMoodTags(bookId) {
+        this.showLoadingModal = true;
+        this.loadingMessage = 'Updating book mood tags...';
+        this.loadingProgress = 50;
+        this.totalBooks = 1;
+        this.processedBooks = 0;
+        
+        // Make AJAX request to update single book
+        fetch(`/books/${bookId}/update-mood-tags`, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({})
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                this.loadingMessage = 'Success! Reloading page...';
+                this.loadingProgress = 100;
+                this.processedBooks = 1;
+                
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            } else {
+                throw new Error(data.message || 'Failed to update mood tags');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            this.loadingMessage = 'Error: ' + error.message;
+            this.loadingProgress = 0;
+            setTimeout(() => {
+                this.showLoadingModal = false;
+            }, 3000);
+        });
+    }
+}">
     <x-common.page-breadcrumb pageTitle="Book List" />
     
     <div class="grid grid-cols-12 gap-4 md:gap-6">
@@ -25,6 +117,17 @@
                                    placeholder="Search by title or author..." 
                                    class="h-[42px] w-full rounded-lg border border-gray-300 bg-transparent py-2.5 pl-[42px] pr-4 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-blue-800 xl:w-[300px]"/>
                         </form>
+                        
+                        <!-- Update Mood Tags Button -->
+                        <button type="button" 
+                            @click="updateAllMoodTags()"
+                            class="inline-flex items-center justify-center gap-2 rounded-lg bg-purple-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-purple-600">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                            </svg>
+                            Update Mood Tags (AI)
+                        </button>
+
                         <!-- Import CSV Button -->
                         <button type="button" 
                         @click="$dispatch('open-modal', { modalId: 'import-modal' })"
@@ -73,6 +176,7 @@
                                     <th scope="col" class="px-4 py-3 font-normal text-gray-500 text-start text-theme-sm dark:text-gray-400">Title</th>
                                     <th scope="col" class="px-4 py-3 font-normal text-gray-500 text-start text-theme-sm dark:text-gray-400">Author</th>
                                     <th scope="col" class="px-4 py-3 font-normal text-gray-500 text-start text-theme-sm dark:text-gray-400">Genre</th>
+                                    <th scope="col" class="px-4 py-3 font-normal text-gray-500 text-start text-theme-sm dark:text-gray-400">Mood Tags</th>
                                     <th scope="col" class="px-4 py-3 font-normal text-gray-500 text-start text-theme-sm dark:text-gray-400">Rating</th>
                                     <th scope="col" class="px-4 py-3 font-normal text-gray-500 text-start text-theme-sm dark:text-gray-400">Stock</th>
                                     <th scope="col" class="px-4 py-3 font-normal text-gray-500 text-start text-theme-sm dark:text-gray-400">Price</th>
@@ -129,6 +233,31 @@
                                             @endforelse
                                         </div>
                                     </td>
+                                    <td class="px-4 py-4">
+                                        <div class="flex flex-wrap gap-1 max-w-[200px]">
+                                            @php
+                                                $moodTags = is_string($book->mood_tags) ? json_decode($book->mood_tags, true) : $book->mood_tags;
+                                            @endphp
+                                            @if(!empty($moodTags) && is_array($moodTags))
+                                                @foreach(array_slice($moodTags, 0, 3) as $mood)
+                                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">
+                                                        <span class="w-1.5 h-1.5 rounded-full bg-purple-500"></span>
+                                                        {{ ucfirst($mood['emotion'] ?? $mood) }}
+                                                        @if(isset($mood['confidence']))
+                                                            <span class="text-[10px] opacity-75">({{ round($mood['confidence'] * 100) }}%)</span>
+                                                        @endif
+                                                    </span>
+                                                @endforeach
+                                                @if(count($moodTags) > 3)
+                                                    <span class="inline-flex px-2 py-0.5 text-xs font-medium rounded-full bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400">
+                                                        +{{ count($moodTags) - 3 }}
+                                                    </span>
+                                                @endif
+                                            @else
+                                                <span class="text-xs text-gray-400">No moods</span>
+                                            @endif
+                                        </div>
+                                      </td>
                                     <td class="px-4 py-4 whitespace-nowrap">
                                         <div class="flex items-center gap-1">
                                             <svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
@@ -141,22 +270,22 @@
                                                 ({{ $book->ratings ?? 0 }})
                                             </span>
                                         </div>
-                                    </td>
+                                      </td>
                                     <td class="px-4 py-4 whitespace-nowrap">
                                         <span class="inline-flex px-2 py-1 text-xs font-medium rounded-full {{ $book->stock > 0 ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' }}">
                                             {{ $book->stock }} in stock
                                         </span>
-                                    </td>
+                                      </td>
                                     <td class="px-4 py-4 whitespace-nowrap">
                                         <div class="text-sm font-semibold text-gray-900 dark:text-white">
                                             Rp {{ number_format($book->price, 0, ',', '.') }}
                                         </div>
-                                    </td>
+                                      </td>
                                     <td class="px-4 py-4 whitespace-nowrap">
                                         <div class="text-sm text-gray-500 dark:text-gray-400">
                                             {{ $book->publish_date ? $book->publish_date->format('M d, Y') : 'N/A' }}
                                         </div>
-                                    </td>
+                                      </td>
                                     <td class="px-4 py-4 text-sm font-medium text-right whitespace-nowrap">
                                         <div class="flex justify-center relative">
                                             <div x-data="{ dropdownOpen: false }" class="relative">
@@ -165,10 +294,13 @@
                                                         <path fill-rule="evenodd" clip-rule="evenodd" d="M5.99902 10.245C6.96552 10.245 7.74902 11.0285 7.74902 11.995V12.005C7.74902 12.9715 6.96552 13.755 5.99902 13.755C5.03253 13.755 4.24902 12.9715 4.24902 12.005V11.995C4.24902 11.0285 5.03253 10.245 5.99902 10.245ZM17.999 10.245C18.9655 10.245 19.749 11.0285 19.749 11.995V12.005C19.749 12.9715 18.9655 13.755 17.999 13.755C17.0325 13.755 16.249 12.9715 16.249 12.005V11.995C16.249 11.0285 17.0325 10.245 17.999 10.245ZM13.749 11.995C13.749 11.0285 12.9655 10.245 11.999 10.245C11.0325 10.245 10.249 11.0285 10.249 11.995V12.005C10.249 12.9715 11.0325 13.755 11.999 13.755C12.9655 13.755 13.749 12.9715 13.749 12.005V11.995Z" fill="currentColor" />
                                                     </svg>
                                                 </button>
-                                                <div x-show="dropdownOpen" @click.away="dropdownOpen = false" class="absolute right-0 z-10 mt-2 w-40 origin-top-right rounded-lg bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none dark:bg-gray-800 dark:ring-gray-700" style="display: none;">
+                                                <div x-show="dropdownOpen" @click.away="dropdownOpen = false" class="absolute right-0 z-10 mt-2 w-44 origin-top-right rounded-lg bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none dark:bg-gray-800 dark:ring-gray-700" style="display: none;">
                                                     <div class="py-1">
                                                         <a href="{{ route('admin.books.show', $book->id) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">View Details</a>
                                                         <a href="{{ route('admin.books.edit', $book->id) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Edit</a>
+                                                        <button type="button" @click="updateSingleBookMoodTags({{ $book->id }})" class="block w-full text-left px-4 py-2 text-sm text-purple-600 hover:bg-gray-100 dark:text-purple-400 dark:hover:bg-gray-700">
+                                                            Update Mood Tags (AI)
+                                                        </button>
                                                         <form method="POST" action="{{ route('admin.books.destroy', $book->id) }}" class="block">
                                                             @csrf
                                                             @method('DELETE')
@@ -178,11 +310,11 @@
                                                 </div>
                                             </div>
                                         </div>
-                                    </td>
+                                      </td>
                                 </tr>
                                 @empty
-                                <tr>
-                                    <td colspan="9" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                                <tr class="empty-row">
+                                    <td colspan="10" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
                                         <div class="flex flex-col items-center justify-center">
                                             <svg class="w-12 h-12 mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
@@ -265,4 +397,54 @@
             </div>
         </div>
     </div>
+
+    <!-- Loading Modal -->
+    <div x-show="showLoadingModal" 
+         x-cloak
+         class="fixed inset-0 z-[99999]! flex items-center justify-center bg-black/50 backdrop-blur-sm"
+         style="display: none;">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl max-w-md w-full mx-4 p-6">
+            <div class="text-center">
+                <!-- Animated Icon -->
+                <div class="mb-4">
+                    <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-purple-100 dark:bg-purple-900/30 animate-pulse">
+                        <svg class="w-8 h-8 text-purple-600 dark:text-purple-400 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                        </svg>
+                    </div>
+                </div>
+                
+                <!-- Title -->
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2" x-text="loadingMessage"></h3>
+                
+                <!-- Progress Bar -->
+                <div class="mt-4">
+                    <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
+                        <span>Processing books</span>
+                        <span x-text="loadingProgress + '%'"></span>
+                    </div>
+                    <div class="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                        <div class="h-full bg-purple-500 rounded-full transition-all duration-300" 
+                             :style="{ width: loadingProgress + '%' }"></div>
+                    </div>
+                </div>
+                
+                
+                <!-- Cancel Button -->
+                <button @click="showLoadingModal = false" 
+                        class="mt-4 px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
+
+@push('styles')
+<style>
+    [x-cloak] {
+        display: none !important;
+    }
+</style>
+@endpush
