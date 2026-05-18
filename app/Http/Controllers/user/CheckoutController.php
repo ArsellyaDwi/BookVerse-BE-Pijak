@@ -73,7 +73,7 @@ class CheckoutController extends Controller
         $request->validate([
             'delivery_method_id' => 'required|exists:delivery_methods,id',
             'payment_method_id' => 'required|exists:payment_methods,id',
-            'delivery_address_id' => 'nullable,1|exists:delivery_addresses,id',
+            'delivery_address_id' => 'nullable|exists:delivery_addresses,id',
             'shipping_cost' => 'required|numeric|min:0',
             'total' => 'required|numeric|min:0'
         ]);
