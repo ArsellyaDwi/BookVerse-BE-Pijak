@@ -4,6 +4,7 @@ use App\Http\Controllers\API\ContactController;
 use App\Http\Controllers\Api\GenreController;
 use App\Http\Controllers\Api\SubscribeController;
 use App\Http\Controllers\QuoteController;
+use App\Http\Controllers\user\AiCollaborativeController;
 use App\Http\Controllers\user\AIContentBasedController;
 use App\Http\Controllers\user\AuthController;
 use App\Http\Controllers\user\BookController;
@@ -50,6 +51,7 @@ Route::get('/quotes/community', [QuoteController::class, 'getAllUserQuotes']);
 
 // CONTENT BASED RECOMMENDATIONS
 Route::get('content-based', [AIContentBasedController::class, 'index']);
+Route::get('collaborative', [AiCollaborativeController::class, 'index']);
 
 // AUTH ROUTES
 Route::group(['middleware' => 'auth:api'], function () {

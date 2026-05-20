@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('ai_recommendation_logs', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained();
+            $table->bigInteger('user_id')->nullable();
             $table->text('input');
             $table->text('result')->nullable();
             $table->dateTime('create_at');
