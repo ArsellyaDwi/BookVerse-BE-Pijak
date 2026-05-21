@@ -67,11 +67,11 @@ class GenreController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $books->items(),
-            'total' => $books->total(),
-            'current_page' => $books->currentPage(),
-            'last_page' => $books->lastPage(),
-            'per_page' => $books->perPage(),
+            'data' => $books,
+            'total' => sizeof($books),
+            // 'current_page' => $books->currentPage(),
+            // 'last_page' => $books->lastPage(),
+            // 'per_page' => $books->perPage(),
             'genre' => $genre
         ]);
     }
