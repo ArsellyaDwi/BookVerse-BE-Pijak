@@ -37,6 +37,13 @@ class MenuHelper
                 ],
             ],
             [
+                'icon' => 'blog',
+                'name' => 'Blog',
+                'subItems' => [
+                    ['name' => 'All Posts', 'path' => '/blogs'],
+                ],
+            ],
+            [
                 'icon' => 'sales',
                 'name' => 'Sales',
                 'subItems' => [
@@ -96,8 +103,14 @@ class MenuHelper
 
             'envelope' => '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 8L12 13L21 8M5 19H19C20.1046 19 21 18.1046 21 17V7C21 5.89543 20.1046 5 19 5H5C3.89543 5 3 5.89543 3 7V17C3 18.1046 3.89543 19 5 19Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>',
 
+            'blog' => '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M4 4H20V20H4V4Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M8 7H16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    <path d="M8 12H16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    <path d="M8 17H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    <path d="M17 17H18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+</svg>',
         ];
-
         return $icons[$iconName] ?? '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="currentColor"/></svg>';
     }
 }

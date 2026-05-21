@@ -24,6 +24,7 @@ use App\Http\Controllers\API\ContactController as APIContactController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\User\PageController;
 use App\Http\Controllers\Api\SubscribeController;
+use App\Http\Controllers\Admin\BlogController;
 
 // Guest routes (no authentication required)
 Route::get('auth/login', [AuthController::class, 'index'])->name('auth.login');
@@ -60,6 +61,8 @@ Route::middleware('admin')->name('admin.')->group(function () {
     Route::resource('customers', CustomerController::class);
     Route::get('settings', [StoreSettingController::class, 'index'])->name('settings.index');
     Route::put('settings', [StoreSettingController::class, 'update'])->name('settings.update');
+
+    Route::resource('blogs', BlogController::class);
 
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
