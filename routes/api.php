@@ -17,6 +17,7 @@ use App\Http\Controllers\user\PaymentMethodController;
 use App\Http\Controllers\user\ResetPasswordController;
 use App\Http\Controllers\user\WishlistController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\API\BlogController;
 
 // PUBLIC ROUTES (No Auth Required)
 Route::post('auth/forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail']);
@@ -105,3 +106,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 // PUBLIC LOGIN & REGISTER (No Auth)
 Route::post('auth/login', [AuthController::class, 'login']);
 Route::post('auth/register', [AuthController::class, 'register']);
+
+Route::get('/blog/posts', [BlogController::class, 'index']);
+Route::get('/blog/posts/{slug}', [BlogController::class, 'show']);
+Route::get('/blog/categories', [BlogController::class, 'categories']);
