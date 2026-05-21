@@ -61,7 +61,7 @@ class GenreController extends Controller
 
     public function getBooksByGenre($slug)
     {
-        $genre = Genre::where('slug', $slug)->firstOrFail();
+        $genre = Genre::with(['books'])->where('slug', $slug)->firstOrFail();
 
         $books = $genre->books();
 
