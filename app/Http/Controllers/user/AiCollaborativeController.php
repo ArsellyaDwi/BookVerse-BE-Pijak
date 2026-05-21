@@ -30,7 +30,7 @@ class AiCollaborativeController extends Controller
                     $aiResult = $response->json();
 
                     $recommendedBookIds = collect($aiResult['recommendations'])->pluck('book_id')->toArray();
-                    if (len($recommendedBookIds) > 0) {
+                    if (sizeof($recommendedBookIds) > 0) {
                         $books = Book::whereIn('id', $recommendedBookIds)
                             ->orderByRaw(DB::raw("FIELD(id, " . implode(',', $recommendedBookIds) . ")"))
                             ->get();
