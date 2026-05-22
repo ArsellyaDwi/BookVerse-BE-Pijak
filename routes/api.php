@@ -30,6 +30,7 @@ Route::post('/contact/send', [ContactController::class, 'send']);
 Route::get('/genre', [GenreController::class, 'index']);
 Route::get('/genre/{slug}', [GenreController::class, 'show']);
 Route::get('/genres/{slug}/books', [GenreController::class, 'getBooksByGenre']);
+Route::get('/genres/with-traits', [GenreController::class, 'getGenresWithTraits']);
 
 // Book Routes
 Route::get('books', [BookController::class, 'index']);

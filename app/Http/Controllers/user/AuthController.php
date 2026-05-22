@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
 
 class AuthController extends Controller
 {
@@ -227,40 +228,77 @@ class AuthController extends Controller
         ]);
     }
 
-    private function getGenreRecommendations($personality)
+private function getGenreRecommendations($personality)
+{
+    // HANYA ambil genre yang memiliki buku (join dengan book_genre)
+    $genres = DB::table('genres')
+        ->join('book_genre', 'genres.id', '=', 'book_genre.genre_id')
+        ->select(
+            'genres.id', 
+            'genres.name',
+            'genres.openness',
+            'genres.conscientiousness',
+            'genres.extroversion',
+            'genres.agreeableness',
+            'genres.neuroticism',
+            DB::raw('COUNT(book_genre.book_id) as total_books')
+        )
+        ->groupBy('genres.id', 'genres.name', 
+            'genres.openness', 'genres.conscientiousness', 
+            'genres.extroversion', 'genres.agreeableness', 'genres.neuroticism')
+        ->having('total_books', '>', 0)
+        ->get();
+
+    if ($genres->isEmpty()) {
+        return [];
+    }
+
+    $recommendations = [];
+    $maxDistance = sqrt(5 * 100 * 100);
+
+    foreach ($genres as $genre) {
+        // Hitung similarity
+        $totalDiff = pow($personality['extroversion'] - $genre->extroversion, 2)
+                   + pow($personality['neuroticism'] - $genre->neuroticism, 2)
+                   + pow($personality['agreeableness'] - $genre->agreeableness, 2)
+                   + pow($personality['conscientiousness'] - $genre->conscientiousness, 2)
+                   + pow($personality['openness'] - $genre->openness, 2);
+        
+        $euclideanDistance = sqrt($totalDiff);
+        $similarity = (1 - ($euclideanDistance / $maxDistance)) * 100;
+        $similarity = round($similarity, 2);
+        
+        $recommendations[] = [
+            'genre' => $genre->name,
+            'score' => $similarity,
+            'total_books' => $genre->total_books
+        ];
+    }
+
+    // Urutkan berdasarkan score tertinggi
+    usort($recommendations, function ($a, $b) {
+        return $b['score'] <=> $a['score'];
+    });
+
+    // Ambil 5 genre teratas yang PUNYA BUKU
+    return array_slice($recommendations, 0, 5);
+}
+
+    private function calculateSimilarity($user, $genre)
     {
-        $recommendations = [];
+        $totalDiff = 0;
+        $traits = ['extroversion', 'neuroticism', 'agreeableness', 'conscientiousness', 'openness'];
 
-        if ($personality['openness'] > 70) {
-            $recommendations[] = ['genre' => 'Science Fiction', 'score' => $personality['openness']];
-        }
-        if ($personality['openness'] > 60) {
-            $recommendations[] = ['genre' => 'Fantasy', 'score' => $personality['openness']];
-        }
-        if ($personality['conscientiousness'] > 70) {
-            $recommendations[] = ['genre' => 'Self Help', 'score' => $personality['conscientiousness']];
-        }
-        if ($personality['conscientiousness'] > 60) {
-            $recommendations[] = ['genre' => 'Business', 'score' => $personality['conscientiousness']];
-        }
-        if ($personality['extroversion'] > 70) {
-            $recommendations[] = ['genre' => 'Romance', 'score' => $personality['extroversion']];
-        }
-        if ($personality['extroversion'] > 60) {
-            $recommendations[] = ['genre' => 'Adventure', 'score' => $personality['extroversion']];
-        }
-        if ($personality['agreeableness'] > 70) {
-            $recommendations[] = ['genre' => 'Fiction', 'score' => $personality['agreeableness']];
-        }
-        if ($personality['neuroticism'] > 60) {
-            $recommendations[] = ['genre' => 'Poetry', 'score' => $personality['neuroticism']];
+        foreach ($traits as $trait) {
+            $diff = ($user[$trait] - $genre[$trait]);
+            $totalDiff += $diff * $diff;
         }
 
-        usort($recommendations, function ($a, $b) {
-            return $b['score'] <=> $a['score'];
-        });
+        $euclideanDistance = sqrt($totalDiff);
+        $maxPossibleDistance = sqrt(5 * 100 * 100);
+        $similarity = (1 - ($euclideanDistance / $maxPossibleDistance)) * 100;
 
-        return array_slice($recommendations, 0, 5);
+        return max(0, min(100, $similarity));
     }
 
     public function savePersonality(Request $request)
