@@ -12,27 +12,27 @@ class GenreController extends Controller
     public function index()
     {
         $genres = Genre::withCount('books')->get();
-        
+
         // Track used book IDs to avoid duplication
         $usedBookIds = [];
-        
+
         $genres->each(function ($genre) use (&$usedBookIds) {
             $bestSeller = $genre->books()
                 ->orderBy('rating', 'desc')
                 ->whereNotIn('books.id', $usedBookIds)
                 ->first();
-            
+
             if ($bestSeller && $bestSeller->cover_img) {
                 $genre->image = asset('storage/' . $bestSeller->cover_img);
                 $usedBookIds[] = $bestSeller->id;
             } else {
                 $anyBook = $genre->books()->first();
-                $genre->image = $anyBook && $anyBook->cover_img 
-                    ? asset('storage/' . $anyBook->cover_img) 
+                $genre->image = $anyBook && $anyBook->cover_img
+                    ? asset('storage/' . $anyBook->cover_img)
                     : $genre->image;
             }
         });
-        
+
         return response()->json([
             'success' => true,
             'data' => $genres
@@ -48,11 +48,11 @@ class GenreController extends Controller
         $bestSeller = $genre->books()
             ->orderBy('rating', 'desc')
             ->first();
-        
-        $genre->image = $bestSeller && $bestSeller->cover_img 
-            ? asset('storage/' . $bestSeller->cover_img) 
+
+        $genre->image = $bestSeller && $bestSeller->cover_img
+            ? asset('storage/' . $bestSeller->cover_img)
             : $genre->image;
-        
+
         return response()->json([
             'success' => true,
             'data' => $genre
@@ -61,21 +61,18 @@ class GenreController extends Controller
 
     public function getBooksByGenre($slug)
     {
-        $genre = Genre::where('slug', $slug)->firstOrFail();
-        
-        $books = $genre->books()->paginate(12);
-        
+        $genre = Genre::with(['books'])->where('slug', $slug)->firstOrFail();
         return response()->json([
             'success' => true,
-            'data' => $books->items(),
-            'total' => $books->total(),
-            'current_page' => $books->currentPage(),
-            'last_page' => $books->lastPage(),
-            'per_page' => $books->perPage(),
+            'data' => $genre->books,
+            'total' => $genre->books->count(),
+            // 'current_page' => $books->currentPage(),
+            // 'last_page' => $books->lastPage(),
+            // 'per_page' => $books->perPage(),
             'genre' => $genre
         ]);
     }
-    
+
     public function getGenresWithUniqueImages()
     {
         $genres = Genre::withCount('books')->get();
@@ -101,24 +98,24 @@ class GenreController extends Controller
 
         $usedBookIds = [];
         $result = [];
-        
+
         foreach ($genres as $genre) {
             $bestBookForGenre = $sortedBooks
                 ->where('genre_id', $genre->id)
                 ->whereNotIn('book_id', $usedBookIds)
                 ->first();
-            
+
             if ($bestBookForGenre && $bestBookForGenre['cover_img']) {
                 $image = asset('storage/' . $bestBookForGenre['cover_img']);
                 $usedBookIds[] = $bestBookForGenre['book_id'];
             } else {
 
                 $anyBook = $genre->books()->first();
-                $image = $anyBook && $anyBook->cover_img 
-                    ? asset('storage/' . $anyBook->cover_img) 
+                $image = $anyBook && $anyBook->cover_img
+                    ? asset('storage/' . $anyBook->cover_img)
                     : null;
             }
-            
+
             $result[] = [
                 'id' => $genre->id,
                 'name' => $genre->name,
@@ -127,7 +124,7 @@ class GenreController extends Controller
                 'image' => $image,
             ];
         }
-        
+
         return response()->json([
             'success' => true,
             'data' => $result
