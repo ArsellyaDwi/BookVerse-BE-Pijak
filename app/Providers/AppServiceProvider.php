@@ -21,7 +21,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Http::globalOptions([
-            'timeout' => 60,
+            'timeout' => 60 * 10,
         ]);
     }
 }
