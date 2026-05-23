@@ -163,7 +163,7 @@ class QuoteController extends Controller
      */
     public function getAllUserQuotes(Request $request)
     {
-        $userId = $request->user('api')->id;
+        $userId = $request->user('api')?->id;
 
         $quotes = BookQuote::with('user')
             ->where('is_approved', true)
@@ -188,7 +188,7 @@ class QuoteController extends Controller
                 }
 
                 // Check if current user is the owner
-                $quote->is_owner = $quote->user_id === $userId;
+                $quote->is_owner = (int)$quote->user_id === (int)$userId;
 
                 return $quote;
             });
