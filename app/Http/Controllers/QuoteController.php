@@ -162,7 +162,7 @@ class QuoteController extends Controller
      */
     public function getAllUserQuotes(Request $request)
     {
-        $userId = auth()->id();
+        $userId = $request->auth('api')->user?->id;
 
         $quotes = BookQuote::with('user')
             ->where('is_approved', true)
