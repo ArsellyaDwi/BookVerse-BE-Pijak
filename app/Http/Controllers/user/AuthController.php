@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\user;
 
 use App\Http\Controllers\Controller;
+use App\Models\Book;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -212,6 +213,14 @@ class AuthController extends Controller
             ]);
         }
 
+        $query = Book::with(['genres', 'characters']);
+        $genreIds = array_column($genres, 'id');
+        $query->whereHas('genres', function ($q) use ($genreIds) {
+            $q->whereIn('genres.id', $genreIds);
+        });
+        $books = $query->take(20)->get();
+
+
         return response()->json([
             'success' => true,
             'data' => [
@@ -223,7 +232,8 @@ class AuthController extends Controller
                     'conscientiousness' => (float) $user->conscientiousness,
                     'openness' => (float) $user->openness,
                 ] : null,
-                'genres' => $genres
+                'genres' => $genres,
+                'books' => $books,
             ],
         ]);
     }
