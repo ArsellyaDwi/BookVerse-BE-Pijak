@@ -78,19 +78,10 @@
                     <ul class="list-inside list-disc space-y-1 text-sm text-blue-700 dark:text-blue-300">
                         <li>First row must contain column headers</li>
                         <li>Required columns: title, author, price</li>
-                        <li>Genres and characters should be separated by pipe (|) character</li>
+                        <li>Genres and characters is array</li>
                         <li>Date format: YYYY-MM-DD</li>
                         <li>Maximum file size: 10MB</li>
                     </ul>
-                    <div class="mt-3">
-                        <a href="{{ route('admin.books.download-template') }}" 
-                           class="inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400">
-                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-                            </svg>
-                            Download Sample CSV Template
-                        </a>
-                    </div>
                 </div>
 
                 <!-- Dropzone -->

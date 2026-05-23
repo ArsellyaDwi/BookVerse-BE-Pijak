@@ -109,7 +109,7 @@ class BookController extends Controller
         }
 
         if ($request->has('sort_by')) {
-            $sortDirection = $request->get('sort_direction', 'asc');
+            $sortDirection = $request->input('sort_direction', 'asc');
             switch ($request->sort_by) {
                 case 'rating':
                 case 'price':
@@ -122,7 +122,7 @@ class BookController extends Controller
             }
         }
 
-        $perPage = $request->get('per_page', 10);
+        $perPage = $request->input('per_page', 10);
         $books = $query->paginate($perPage);
 
         return response()->json([

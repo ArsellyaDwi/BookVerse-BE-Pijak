@@ -211,35 +211,6 @@ class BookController extends Controller
             return back()->with('error', 'Empty CSV file or invalid format.');
         }
 
-        // Expected headers mapping
-        $expectedHeaders = [
-            'bookId',
-            'title',
-            'series',
-            'author',
-            'rating',
-            'description',
-            'language',
-            'isbn',
-            'genres',
-            'characters',
-            'bookFormat',
-            'edition',
-            'pages',
-            'publisher',
-            'publishDate',
-            'firstPublishDate',
-            'awards',
-            'numRatings',
-            'ratingsByStars',
-            'likedPercent',
-            'setting',
-            'coverImg',
-            'bbeScore',
-            'bbeVotes',
-            'price'
-        ];
-
         // Validate headers (allow extra columns, but required ones must exist)
         $requiredHeaders = ['title', 'author', 'price'];
         $missingRequired = array_diff($requiredHeaders, $headers);
