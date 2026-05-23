@@ -7,6 +7,7 @@ use App\Models\BookQuote;
 use App\Models\QuoteLike;
 use App\Models\UserSavedQuote;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 
 class QuoteController extends Controller
@@ -162,7 +163,7 @@ class QuoteController extends Controller
      */
     public function getAllUserQuotes(Request $request)
     {
-        $userId = $request->auth('api')->user?->id;
+        $userId = Auth('api')->user()?->id;
 
         $quotes = BookQuote::with('user')
             ->where('is_approved', true)
