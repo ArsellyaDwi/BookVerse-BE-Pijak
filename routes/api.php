@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\API\ContactController;
+use App\Http\Controllers\Api\ContactController;
 use App\Http\Controllers\Api\GenreController;
 use App\Http\Controllers\Api\SubscribeController;
 use App\Http\Controllers\QuoteController;
@@ -18,7 +18,7 @@ use App\Http\Controllers\user\PaymentMethodController;
 use App\Http\Controllers\user\ResetPasswordController;
 use App\Http\Controllers\user\WishlistController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\API\BlogController;
+use App\Http\Controllers\Api\BlogController;
 
 // PUBLIC ROUTES (No Auth Required)
 Route::post('auth/forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail']);

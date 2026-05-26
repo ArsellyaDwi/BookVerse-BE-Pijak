@@ -15,7 +15,6 @@ return new class extends Migration
             $table->float('agreeableness')->default(50);
             $table->float('conscientiousness')->default(50);
             $table->float('openness')->default(50);
-
         });
     }
 
@@ -30,7 +29,6 @@ return new class extends Migration
                 'conscientiousness',
                 'openness'
             ]);
-
         });
     }
 };

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\API;
+namespace App\Http\Controllers\Api;
 
 use App\Models\Blog;
 use Illuminate\Http\Request;
@@ -11,19 +11,19 @@ class BlogController extends Controller
     public function index(Request $request)
     {
         $query = Blog::where('is_published', true);
-        
+
         if ($request->has('search')) {
             $query->where('title', 'like', '%' . $request->search . '%')
-                  ->orWhere('content', 'like', '%' . $request->search . '%');
+                ->orWhere('content', 'like', '%' . $request->search . '%');
         }
-        
+
         if ($request->has('category')) {
             $query->where('category', $request->category);
         }
-        
+
         $perPage = $request->get('per_page', 10);
         $blogs = $query->orderBy('published_at', 'desc')->paginate($perPage);
-        
+
         return response()->json([
             'success' => true,
             'data' => $blogs->items(),
@@ -40,7 +40,7 @@ class BlogController extends Controller
     {
         $blog = Blog::where('slug', $slug)->where('is_published', true)->firstOrFail();
         $blog->increment('views');
-        
+
         return response()->json([
             'success' => true,
             'data' => $blog
@@ -53,7 +53,7 @@ class BlogController extends Controller
             ->select('category')
             ->distinct()
             ->pluck('category');
-        
+
         return response()->json([
             'success' => true,
             'data' => $categories

@@ -99,25 +99,34 @@ class EmotionController extends Controller
             // Check if there's a rule for this emotion
             $emotionRule = AIEmotionRule::where('input_emotion', $topEmotion)->first();
 
+            $emotionDistribution = [];
+            $appliedRule = null;
             $searchEmotions = [];
 
-            // If rule exists, use suggested output emotions from the rule
-            if ($emotionRule && !empty($emotionRule->suggested_output_emotions)) {
-                // Use the suggested output emotions from the rule
-                $searchEmotions = $emotionRule->suggested_output_emotions;
+            // If rule exists, use the emotion distribution from the rule
+            if ($emotionRule) {
+                // Get the emotion distribution based on the ratio
+                $emotionDistribution = $emotionRule->calculateEmotionDistribution();
+                $searchEmotions = array_keys($emotionDistribution);
                 $appliedRule = [
                     'input_emotion' => $emotionRule->input_emotion,
-                    'suggested_outputs' => $emotionRule->suggested_output_emotions
+                    'suggested_outputs' => $emotionRule->suggested_output_emotions,
+                    'matched_outputs' => $emotionRule->matched_output_emotions,
+                    'ratio' => $emotionRule->suggested_match_ratio,
+                    'distribution' => $emotionDistribution
                 ];
             } else {
-                // No rule found, search by all predicted emotions
-                // Extract all emotions from predictions (not just top emotion)
+                // No rule found, use predictions with equal distribution
                 $searchEmotions = array_unique(array_column($predictions, 'emotion'));
+                $equalWeight = 1 / count($searchEmotions);
+                foreach ($searchEmotions as $emotion) {
+                    $emotionDistribution[$emotion] = $equalWeight;
+                }
                 $appliedRule = null;
             }
 
-            // Search for books with the determined emotions
-            $books = $this->searchBooksByEmotions($searchEmotions, $predictions);
+            // Search for books with distribution-based weighting
+            $books = $this->searchBooksByEmotionsWithDistribution($searchEmotions, $emotionDistribution, $predictions);
 
             // Log the recommendation
             $log = AiRecommendationLog::create([
@@ -134,6 +143,7 @@ class EmotionController extends Controller
                     'top_emotion' => $topEmotion,
                     'rule_applied' => !is_null($appliedRule),
                     'applied_rule' => $appliedRule,
+                    'emotion_distribution' => $emotionDistribution,
                     'search_emotions' => $searchEmotions,
                     'search_source' => $emotionRule ? 'rule_based' : 'prediction_based',
                     'books' => $books,
@@ -150,9 +160,13 @@ class EmotionController extends Controller
         }
     }
 
-    private function searchBooksByEmotions(array $searchEmotions, array $predictions = [])
+    /**
+     * Search books using emotion distribution weights
+     * This ensures books are selected proportionally based on the ratio of suggested vs matched emotions
+     */
+    private function searchBooksByEmotionsWithDistribution(array $searchEmotions, array $emotionDistribution, array $predictions = [], $totalBooks = 20)
     {
-        if (empty($searchEmotions)) {
+        if (empty($searchEmotions) || empty($emotionDistribution)) {
             return [];
         }
 
@@ -161,7 +175,9 @@ class EmotionController extends Controller
             ->with(['genres', 'characters'])
             ->get();
 
-        $matchedBooks = [];
+        // Group books by the primary emotion they match
+        $booksByEmotion = [];
+        $bookScores = [];
 
         foreach ($books as $book) {
             $bookMoods = $book->mood_tags;
@@ -170,9 +186,10 @@ class EmotionController extends Controller
                 continue;
             }
 
-            // Calculate match score for this book
-            $matchScore = 0;
+            // Find which search emotions match this book
             $matchedEmotions = [];
+            $bestMatchScore = 0;
+            $primaryEmotion = null;
             $totalConfidence = 0;
 
             foreach ($bookMoods as $bookMood) {
@@ -180,27 +197,23 @@ class EmotionController extends Controller
                 $bookConfidence = $bookMood['confidence'] ?? 0;
 
                 if (in_array($bookEmotion, $searchEmotions)) {
-                    $matchScore++;
                     $matchedEmotions[] = $bookEmotion;
                     $totalConfidence += $bookConfidence;
+
+                    // Calculate match score based on emotion weight from distribution
+                    $emotionWeight = $emotionDistribution[$bookEmotion] ?? 0;
+                    $matchScore = $emotionWeight * (1 + $bookConfidence);
+
+                    if ($matchScore > $bestMatchScore) {
+                        $bestMatchScore = $matchScore;
+                        $primaryEmotion = $bookEmotion;
+                    }
                 }
             }
 
-            // If there's at least one match, include the book
-            if ($matchScore > 0) {
-                // Calculate relevance score based on matches and confidence
-                $relevanceScore = $matchScore + ($totalConfidence / max(count($bookMoods), 1));
-
-                // Add prediction confidence bonus
-                $predictionMatchBonus = 0;
-                foreach ($predictions as $prediction) {
-                    if (in_array($prediction['emotion'], $searchEmotions)) {
-                        $predictionMatchBonus += $prediction['confidence'];
-                    }
-                }
-                $relevanceScore += $predictionMatchBonus;
-
-                $matchedBooks[] = [
+            // If there's at least one match, store the book
+            if (!empty($matchedEmotions) && $primaryEmotion) {
+                $bookData = [
                     'id' => $book->id,
                     'title' => $book->title,
                     'author' => $book->author,
@@ -212,19 +225,76 @@ class EmotionController extends Controller
                     'characters' => $book->characters->pluck('name'),
                     'mood_tags' => $book->mood_tags,
                     'matched_emotions' => $matchedEmotions,
-                    'match_count' => $matchScore,
-                    'relevance_score' => round($relevanceScore, 2)
+                    'primary_emotion' => $primaryEmotion,
+                    'relevance_score' => $bestMatchScore,
+                    'match_count' => count($matchedEmotions)
                 ];
+
+                // Group by primary emotion
+                if (!isset($booksByEmotion[$primaryEmotion])) {
+                    $booksByEmotion[$primaryEmotion] = [];
+                }
+                $booksByEmotion[$primaryEmotion][] = $bookData;
+
+                // Store for scoring
+                $bookScores[$book->id] = $bestMatchScore;
             }
         }
 
-        // Sort books by relevance score (highest first)
-        usort($matchedBooks, function ($a, $b) {
+        // Sort books within each emotion by relevance score
+        foreach ($booksByEmotion as $emotion => $bookList) {
+            usort($booksByEmotion[$emotion], function ($a, $b) {
+                return $b['relevance_score'] <=> $a['relevance_score'];
+            });
+        }
+
+        // Select books based on distribution weights
+        $selectedBooks = [];
+        $booksNeeded = $totalBooks;
+
+        // Calculate how many books to take from each emotion based on distribution
+        $booksPerEmotion = [];
+        foreach ($emotionDistribution as $emotion => $weight) {
+            if (isset($booksByEmotion[$emotion])) {
+                $allocatedCount = (int) round($weight * $totalBooks);
+                $booksPerEmotion[$emotion] = min($allocatedCount, count($booksByEmotion[$emotion]));
+                $booksNeeded -= $booksPerEmotion[$emotion];
+            }
+        }
+
+        // Distribute remaining books to emotions that have more books available
+        if ($booksNeeded > 0) {
+            $remainingEmotions = array_keys($booksPerEmotion);
+            $index = 0;
+            while ($booksNeeded > 0 && !empty($remainingEmotions)) {
+                $emotion = $remainingEmotions[$index % count($remainingEmotions)];
+                if ($booksPerEmotion[$emotion] < count($booksByEmotion[$emotion])) {
+                    $booksPerEmotion[$emotion]++;
+                    $booksNeeded--;
+                }
+                $index++;
+
+                // Remove emotions that have no more books
+                $remainingEmotions = array_filter($remainingEmotions, function ($e) use ($booksPerEmotion, $booksByEmotion) {
+                    return $booksPerEmotion[$e] < count($booksByEmotion[$e]);
+                });
+                $remainingEmotions = array_values($remainingEmotions);
+            }
+        }
+
+        // Select books according to allocation
+        foreach ($booksPerEmotion as $emotion => $count) {
+            for ($i = 0; $i < $count && $i < count($booksByEmotion[$emotion]); $i++) {
+                $selectedBooks[] = $booksByEmotion[$emotion][$i];
+            }
+        }
+
+        // Sort final selection by relevance score
+        usort($selectedBooks, function ($a, $b) {
             return $b['relevance_score'] <=> $a['relevance_score'];
         });
 
-        // Limit to top 20 recommendations
-        return array_slice($matchedBooks, 0, 20);
+        return $selectedBooks;
     }
 
     /**
@@ -255,32 +325,58 @@ class EmotionController extends Controller
             // Step 2: Get top emotion
             $topEmotion = !empty($predictions) ? $predictions[0]['emotion'] : 'happiness';
 
-            // Step 3: Get book recommendations based on top emotion
-            $emotionToGenres = [
-                'happiness' => ['Fiction', 'Comedy', 'Romance', 'Adventure'],
-                'sadness' => ['Self-Help', 'Motivational', 'Inspirational'],
-                'anxiety' => ['Self-Help', 'Philosophy', 'Mindfulness'],
-                'fear' => ['Motivational', 'Inspirational', 'Self-Help'],
-                'relief' => ['Fiction', 'Romance', 'Comedy'],
-                'love' => ['Romance', 'Poetry', 'Fiction'],
-                'anger' => ['Fiction', 'Thriller', 'Action'],
-                'loneliness' => ['Romance', 'Fiction', 'Self-Help']
-            ];
+            // Step 3: Check for emotion rule
+            $emotionRule = AIEmotionRule::where('input_emotion', $topEmotion)->first();
 
-            $genres = $emotionToGenres[$topEmotion] ?? ['Fiction'];
+            $searchEmotions = [];
+            $emotionDistribution = [];
 
-            $books = Book::whereHas('genres', function ($query) use ($genres) {
-                $query->whereIn('name', $genres);
-            })
-                ->with('genres')
-                ->limit(12)
-                ->get();
+            if ($emotionRule) {
+                $emotionDistribution = $emotionRule->calculateEmotionDistribution();
+                $searchEmotions = array_keys($emotionDistribution);
+            } else {
+                // Fallback to genre-based recommendation if no rule exists
+                $emotionToGenres = [
+                    'happiness' => ['Fiction', 'Comedy', 'Romance', 'Adventure'],
+                    'sadness' => ['Self-Help', 'Motivational', 'Inspirational'],
+                    'anxiety' => ['Self-Help', 'Philosophy', 'Mindfulness'],
+                    'fear' => ['Motivational', 'Inspirational', 'Self-Help'],
+                    'relief' => ['Fiction', 'Romance', 'Comedy'],
+                    'love' => ['Romance', 'Poetry', 'Fiction'],
+                    'anger' => ['Fiction', 'Thriller', 'Action'],
+                    'loneliness' => ['Romance', 'Fiction', 'Self-Help']
+                ];
+
+                $genres = $emotionToGenres[$topEmotion] ?? ['Fiction'];
+
+                $books = Book::whereHas('genres', function ($query) use ($genres) {
+                    $query->whereIn('name', $genres);
+                })
+                    ->with('genres')
+                    ->limit(12)
+                    ->get();
+
+                return response()->json([
+                    'success' => true,
+                    'data' => [
+                        'detected_emotions' => $predictions,
+                        'top_emotion' => $topEmotion,
+                        'rule_applied' => false,
+                        'recommended_books' => $books
+                    ]
+                ]);
+            }
+
+            // Search books with distribution
+            $books = $this->searchBooksByEmotionsWithDistribution($searchEmotions, $emotionDistribution, $predictions, 20);
 
             return response()->json([
                 'success' => true,
                 'data' => [
                     'detected_emotions' => $predictions,
                     'top_emotion' => $topEmotion,
+                    'rule_applied' => true,
+                    'emotion_distribution' => $emotionDistribution,
                     'recommended_books' => $books
                 ]
             ]);
@@ -291,17 +387,18 @@ class EmotionController extends Controller
             ], 500);
         }
     }
+
     public function getEmotions()
     {
         try {
-            $response = Http::get('http://localhost:5001/emotions');
+            // $response = Http::get('http://localhost:5001/emotions');
 
-            if ($response->successful()) {
-                return response()->json([
-                    'success' => true,
-                    'data' => $response->json()
-                ]);
-            }
+            // if ($response->successful()) {
+            //     return response()->json([
+            //         'success' => true,
+            //         'data' => $response->json()
+            //     ]);
+            // }
 
             $fallbackEmotions = [
                 'happiness',

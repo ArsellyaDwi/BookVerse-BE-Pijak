@@ -26,12 +26,19 @@ class AIEmotionRuleController extends Controller
         $request->validate([
             'input_emotion' => 'required|string',
             'suggested_output_emotions' => 'required|array',
-            'suggested_output_emotions.*' => 'string'
+            'suggested_output_emotions.*' => 'string',
+            'suggested_match_ratio' => 'nullable|numeric|min:0|max:100',
+            'matched_output_emotions' => 'nullable|array',
+            'matched_output_emotions.*' => 'string'
         ]);
 
         $rule = AIEmotionRule::updateOrCreate(
             ['input_emotion' => $request->input_emotion],
-            ['suggested_output_emotions' => $request->suggested_output_emotions]
+            [
+                'suggested_output_emotions' => $request->suggested_output_emotions,
+                'suggested_match_ratio' => $request->suggested_match_ratio ?? 50,
+                'matched_output_emotions' => $request->matched_output_emotions ?? []
+            ]
         );
 
         $isNew = $rule->wasRecentlyCreated;
@@ -40,6 +47,7 @@ class AIEmotionRuleController extends Controller
             'success' => true,
             'message' => $isNew ? 'Emotion rule created successfully' : 'Emotion rule updated successfully',
             'rule' => $rule,
+            'distribution' => $rule->calculateEmotionDistribution(),
             'is_new' => $isNew
         ]);
     }
@@ -49,7 +57,9 @@ class AIEmotionRuleController extends Controller
         $request->validate([
             'rules' => 'required|array',
             'rules.*.input_emotion' => 'required|string',
-            'rules.*.suggested_output_emotions' => 'nullable|array'
+            'rules.*.suggested_output_emotions' => 'nullable|array',
+            'rules.*.suggested_match_ratio' => 'nullable|numeric|min:0|max:100',
+            'rules.*.matched_output_emotions' => 'nullable|array'
         ]);
 
         $updated = 0;
@@ -58,7 +68,11 @@ class AIEmotionRuleController extends Controller
         foreach ($request->rules as $ruleData) {
             $rule = AIEmotionRule::updateOrCreate(
                 ['input_emotion' => $ruleData['input_emotion']],
-                ['suggested_output_emotions' => $ruleData['suggested_output_emotions']]
+                [
+                    'suggested_output_emotions' => $ruleData['suggested_output_emotions'] ?? [],
+                    'suggested_match_ratio' => $ruleData['suggested_match_ratio'] ?? 50,
+                    'matched_output_emotions' => $ruleData['matched_output_emotions'] ?? []
+                ]
             );
 
             if ($rule->wasRecentlyCreated) {
