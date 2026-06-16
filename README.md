@@ -1,58 +1,201 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Deskripsi Singkat Proyek
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Proyek ini adalah Backend BookVerse yang dibuat menggunakan Laravel. Backend ini berfungsi sebagai pusat layanan API untuk aplikasi BookVerse yang menyediakan autentikasi pengguna, manajemen data buku, sistem ulasan dan rating, pengelolaan koleksi buku, serta integrasi dengan layanan AI untuk rekomendasi buku dan analisis emosi.
 
-## About Laravel
+Selain sebagai API, backend ini juga menyediakan **Admin Panel BookVerse** yang dapat diakses melalui URL utama untuk mengelola seluruh data sistem melalui antarmuka web.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+# Pentunjuk Setup Environment
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+Pastikan telah melakukan instalasi:
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+* PHP 8.3
+* Composer
+* MySQL
 
-## Learning Laravel
+1. Salin file `.env.example` dan ubah namanya menjadi `.env`.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+2. Sesuaikan konfigurasi pada file `.env` sesuai dengan environment yang digunakan.
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+Contoh konfigurasi:
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+```env id="env4"
+APP_NAME=Laravel
+APP_ENV=local
+APP_KEY=
+APP_DEBUG=true
+APP_URL=http://localhost
+FRONTEND_URL=http://localhost:5173
 
-## Agentic Development
+AI_SERVICE_KEY=<AI_SERVICE_KEY>
+AI_SERVICE_URL=<AI_SERVICE_URL>
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+APP_LOCALE=en
+APP_FALLBACK_LOCALE=en
+APP_FAKER_LOCALE=en_US
 
-```bash
-composer require laravel/boost --dev
+APP_MAINTENANCE_DRIVER=file
 
-php artisan boost:install
+BCRYPT_ROUNDS=12
+
+LOG_CHANNEL=stack
+LOG_STACK=single
+LOG_DEPRECATIONS_CHANNEL=null
+LOG_LEVEL=debug
+
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=bookverse_db
+DB_USERNAME=root
+DB_PASSWORD=
+
+SESSION_DRIVER=database
+SESSION_LIFETIME=120
+SESSION_ENCRYPT=false
+SESSION_PATH=/
+SESSION_DOMAIN=null
+
+BROADCAST_CONNECTION=log
+FILESYSTEM_DISK=local
+QUEUE_CONNECTION=database
+
+CACHE_STORE=database
+
+MEMCACHED_HOST=127.0.0.1
+
+REDIS_CLIENT=phpredis
+REDIS_HOST=127.0.0.1
+REDIS_PASSWORD=null
+REDIS_PORT=6379
+
+MAIL_MAILER=smtp
+MAIL_HOST=<MAIL_HOST>
+MAIL_PORT=<MAIL_PORT>
+MAIL_USERNAME=<MAIL_USERNAME>
+MAIL_PASSWORD=<MAIL_PASSWORD>
+MAIL_ENCRYPTION=tls
+MAIL_FROM_ADDRESS=<MAIL_FROM_ADDRESS>
+MAIL_FROM_NAME="<MAIL_FROM_NAME>"
+
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
+AWS_DEFAULT_REGION=us-east-1
+AWS_BUCKET=
+AWS_USE_PATH_STYLE_ENDPOINT=false
+
+VITE_APP_NAME="${APP_NAME}"
+
+JWT_SECRET=
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+3. Pastikan database `bookverse_db` sudah dibuat sesuai konfigurasi `.env`.
 
-## Contributing
+---
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+# Konfigurasi AI Service
 
-## Code of Conduct
+Backend ini terhubung dengan layanan AI BookVerse untuk fitur:
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+* Emotion Detection
+* Content-Based Recommendation
+* Collaborative Recommendation
+* Personality Recommendation
 
-## Security Vulnerabilities
+```env
+AI_SERVICE_URL=<AI_SERVICE_URL>
+AI_SERVICE_KEY=<AI_SERVICE_KEY>
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Keterangan:
 
-## License
+* `AI_SERVICE_URL` adalah endpoint layanan AI yang digunakan backend untuk mengakses seluruh fitur kecerdasan buatan.
+* `AI_SERVICE_KEY` adalah kunci autentikasi yang digunakan untuk mengamankan request dari backend ke layanan AI.
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+---
+
+# Konfigurasi Mail
+
+Backend menggunakan layanan email SMTP untuk mengirim notifikasi sistem dan komunikasi ke pengguna.
+
+```env
+MAIL_MAILER=smtp
+MAIL_HOST=<MAIL_HOST>
+MAIL_PORT=<MAIL_PORT>
+MAIL_USERNAME=<MAIL_USERNAME>
+MAIL_PASSWORD=<MAIL_PASSWORD>
+MAIL_ENCRYPTION=tls
+MAIL_FROM_ADDRESS=<MAIL_FROM_ADDRESS>
+MAIL_FROM_NAME="<MAIL_FROM_NAME>"
+```
+
+Keterangan:
+
+* `MAIL_HOST` adalah server SMTP yang digunakan untuk pengiriman email.
+* `MAIL_PORT` adalah port SMTP (umumnya 587 untuk TLS).
+* `MAIL_USERNAME` adalah email yang digunakan sebagai pengirim.
+* `MAIL_PASSWORD` adalah password atau app password email.
+* `MAIL_FROM_ADDRESS` adalah alamat email pengirim yang tampil di email user.
+* `MAIL_FROM_NAME` adalah nama pengirim yang tampil di email.
+
+Catatan:
+
+* Gunakan App Password jika menggunakan Gmail.
+* Jangan membagikan kredensial email ke publik.
+
+---
+
+# Akses Admin Panel
+
+Jika URL aplikasi dibuka di browser:
+
+```text id="admin4"
+http://localhost:8000
+```
+
+maka akan langsung diarahkan ke **Admin Panel BookVerse**.
+
+---
+
+# Cara Menjalankan aplikasi
+
+1. Install dependency Laravel:
+
+```bash id="c20"
+composer install
+```
+
+2. Generate application key:
+
+```bash id="c21"
+php artisan key:generate
+```
+
+3. Jalankan migrasi database:
+
+```bash id="c22"
+php artisan migrate
+```
+
+4. Jalankan database seeder:
+
+```bash id="c23"
+php artisan db:seed
+```
+
+5. Generate JWT secret:
+
+```bash id="c24"
+php artisan jwt:secret
+```
+
+6. Jalankan aplikasi:
+
+```bash id="c25"
+php artisan serve
+```
+
+7. Setelah aplikasi berjalan, backend dapat diakses melalui:
+
+```text id="c26"
+http://localhost:8000
+```
